@@ -1,0 +1,9 @@
+{
+  "type": "TELEGRAF",
+  "version": "1.11.0",
+  "labels": {
+    "os": "linux"
+  },
+  "url": "https://dl.influxdata.com/telegraf/releases/telegraf-1.11.0-static_linux_amd64.tar.gz",
+  "exe": "./telegraf/telegraf"
+}

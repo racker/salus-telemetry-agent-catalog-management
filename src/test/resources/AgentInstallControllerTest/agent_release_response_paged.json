@@ -1,0 +1,21 @@
+{
+  "content": [
+    {
+      "id": "00000000-0000-0000-0001-000000000000",
+      "type": "TELEGRAF",
+      "version": "1.11.0",
+      "labels": {
+        "os": "linux"
+      },
+      "url": "https://dl.influxdata.com/telegraf/releases/telegraf-1.11.0-static_linux_amd64.tar.gz",
+      "exe": "./telegraf/telegraf",
+      "createdTimestamp": "1970-01-02T03:46:40Z",
+      "updatedTimestamp": "1970-01-02T03:46:41Z"
+    }
+  ],
+  "number": 0,
+  "totalPages": 1,
+  "totalElements": 1,
+  "last": true,
+  "first": true
+}
