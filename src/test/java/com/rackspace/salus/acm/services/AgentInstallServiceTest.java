@@ -58,15 +58,19 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @SuppressWarnings("OptionalGetWithoutIsPresent")
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureTestDatabase
+@EnableAutoConfiguration(exclude = KafkaAutoConfiguration.class)
 public class AgentInstallServiceTest {
 
   @MockBean
@@ -74,6 +78,9 @@ public class AgentInstallServiceTest {
 
   @MockBean
   BoundEventSender boundEventSender;
+
+  @MockBean
+  KafkaTemplate kafkaTemplate;
 
   @MockBean
   ResourceEventListener resourceEventListener;

@@ -170,8 +170,9 @@
             <apiSource>
               <springmvc>true</springmvc>
               <locations>
-                <location>com.rackspace.salus.resource_management.web.model</location>
-                <location>com.rackspace.salus.resource_management.web.controller.ResourceApi</location>
+                <location>com.rackspace.salus.acm.web.model</location>
+                <location>com.rackspace.salus.acm.web.controller.AgentInstallController</location>
+                <location>com.rackspace.salus.acm.web.controller.AgentReleaseController</location>
               </locations>
               <templatePath>${basedir}/templates/strapdown.html.hbs</templatePath>
               <schemes>
@@ -179,7 +180,7 @@
                 <scheme>http</scheme>
               </schemes>
               <info>
-                <title>Salus Resource Management</title>
+                <title>Salus Agent Catalog Management</title>
                 <version>0.1.0</version>
               </info>
               <outputPath>${project.build.directory}/generated/swagger/document.html</outputPath>
