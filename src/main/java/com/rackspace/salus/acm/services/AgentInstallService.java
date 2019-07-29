@@ -25,6 +25,7 @@ import com.rackspace.salus.acm.repositories.AgentReleaseRepository;
 import com.rackspace.salus.acm.repositories.BoundAgentInstallRepository;
 import com.rackspace.salus.acm.web.model.AgentInstallCreate;
 import com.rackspace.salus.acm.web.model.AgentInstallDTO;
+import com.rackspace.salus.common.transactions.EnableJpaKafkaTransactions;
 import com.rackspace.salus.resource_management.web.client.ResourceApi;
 import com.rackspace.salus.resource_management.web.model.ResourceDTO;
 import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
@@ -47,11 +48,13 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.util.LinkedMultiValueMap;
 
 @Service
 @Slf4j
+@EnableJpaKafkaTransactions
 public class AgentInstallService {
 
   private final JdbcTemplate jdbcTemplate;
@@ -79,6 +82,7 @@ public class AgentInstallService {
     this.boundEventSender = boundEventSender;
   }
 
+  @Transactional(value="jpaKafkaTransactionManager")
   public AgentInstallDTO install(String tenantId, AgentInstallCreate in) {
     Assert.notNull(tenantId, "tenantId is required");
 
@@ -108,6 +112,7 @@ public class AgentInstallService {
     return saved.toDTO();
   }
 
+  @Transactional(value="jpaKafkaTransactionManager")
   public void delete(String tenantId, UUID agentInstallId) {
     final AgentInstall agentInstall = agentInstallRepository.findByIdAndTenantId(agentInstallId, tenantId)
         .orElseThrow(() ->

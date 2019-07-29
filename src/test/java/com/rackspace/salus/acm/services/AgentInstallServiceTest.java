@@ -52,6 +52,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -62,16 +63,42 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.test.context.EmbeddedKafka;
+import org.springframework.orm.jpa.JpaTransactionManager;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.transaction.PlatformTransactionManager;
 
 @SuppressWarnings("OptionalGetWithoutIsPresent")
 @RunWith(SpringRunner.class)
-@SpringBootTest
+@SpringBootTest(properties = "salus.kafka.chained.transaction.manager=false")
 @AutoConfigureTestDatabase
 @EnableAutoConfiguration(exclude = KafkaAutoConfiguration.class)
+//@EmbeddedKafka(topics = "dummyTopic",
+//    brokerProperties = {"transaction.state.log.replication.factor=1",
+//        "transaction.state.log.min.isr=1"},
+//    partitions = 1)
+//
 public class AgentInstallServiceTest {
+  @TestConfiguration
+
+  public static class Config {
+    @Bean
+    public PlatformTransactionManager jpaKafkaTransactionManager(EntityManagerFactory em) {
+      return transactionManager(em);
+    }
+
+    @Primary  // when in doubt, chose this txnManager
+    @Bean
+    public PlatformTransactionManager transactionManager(EntityManagerFactory em) {
+      return new JpaTransactionManager(em);
+    }
+  }
 
   @MockBean
   ResourceApi resourceApi;
