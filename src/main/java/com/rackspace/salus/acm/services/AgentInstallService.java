@@ -54,7 +54,7 @@ import org.springframework.util.LinkedMultiValueMap;
 
 @Service
 @Slf4j
-@EnableJpaKafkaTransactions
+//@EnableJpaKafkaTransactions
 public class AgentInstallService {
 
   private final JdbcTemplate jdbcTemplate;
@@ -82,7 +82,7 @@ public class AgentInstallService {
     this.boundEventSender = boundEventSender;
   }
 
-  @Transactional(value="jpaKafkaTransactionManager")
+  @Transactional//(value="jpaKafkaTransactionManager")
   public AgentInstallDTO install(String tenantId, AgentInstallCreate in) {
     Assert.notNull(tenantId, "tenantId is required");
 
@@ -112,7 +112,7 @@ public class AgentInstallService {
     return saved.toDTO();
   }
 
-  @Transactional(value="jpaKafkaTransactionManager")
+  @Transactional//(value="jpaKafkaTransactionManager")
   public void delete(String tenantId, UUID agentInstallId) {
     final AgentInstall agentInstall = agentInstallRepository.findByIdAndTenantId(agentInstallId, tenantId)
         .orElseThrow(() ->
