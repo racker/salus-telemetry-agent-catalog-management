@@ -22,9 +22,10 @@ import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.CrudRepository;
 
-public interface AgentInstallRepository extends CrudRepository<AgentInstall, UUID> {
+public interface AgentInstallRepository extends JpaRepository<AgentInstall, UUID> {
 
   Optional<AgentInstall> findByIdAndTenantId(UUID id, String tenantId);
 
