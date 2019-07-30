@@ -45,7 +45,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest
+@SpringBootTest(properties = "salus.kafka.chained.transaction.manager=false")
 @AutoConfigureTestDatabase
 @EnableAutoConfiguration(exclude = KafkaAutoConfiguration.class)
 public class AgentReleaseServiceTest {
