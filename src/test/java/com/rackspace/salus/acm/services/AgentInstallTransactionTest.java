@@ -20,7 +20,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
-import static org.springframework.kafka.test.utils.KafkaTestUtils.getSingleRecord;
 import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,15 +39,12 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.checkerframework.checker.nullness.Opt;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -84,10 +80,13 @@ import uk.co.jemos.podam.api.PodamFactoryImpl;
 @ImportAutoConfiguration({
     KafkaAutoConfiguration.class
 })
-@EmbeddedKafka(topics = {AgentInstallTransactionTest.TEST_TOPIC1, AgentInstallTransactionTest.TEST_TOPIC2},
-   brokerProperties = {"transaction.state.log.replication.factor=1",
-                       "transaction.state.log.min.isr=1"},
-   partitions = 1)
+@EmbeddedKafka(topics =
+    {AgentInstallTransactionTest.TEST_TOPIC1,
+    AgentInstallTransactionTest.TEST_TOPIC2},
+    brokerProperties =
+        {"transaction.state.log.replication.factor=1",
+        "transaction.state.log.min.isr=1"},
+    partitions = 1)
 @DirtiesContext(classMode = ClassMode.AFTER_EACH_TEST_METHOD)
 public class AgentInstallTransactionTest {
 
@@ -97,6 +96,110 @@ public class AgentInstallTransactionTest {
   static {
     System.setProperty(
         EmbeddedKafkaBroker.BROKER_LIST_PROPERTY, "spring.kafka.bootstrap-servers");
+  }
+
+  @Autowired
+  ObjectMapper objectMapper;
+  @Autowired
+  JdbcTemplate jdbcTemplate;
+  @MockBean
+  BoundEventSender mockEventSender;
+  BoundEventSender boundEventSender;
+  @Autowired
+  AgentInstallService agentInstallService;
+  @Autowired
+  AgentInstallRepository agentInstallRepository;
+  @Autowired
+  BoundAgentInstallRepository boundAgentInstallRepository;
+  @Autowired
+  AgentReleaseRepository agentReleaseRepository;
+  @MockBean
+  ResourceApi resourceApi;
+  @Autowired
+  EntityManagerFactory entityManagerFactory;
+  private PodamFactory podamFactory = new PodamFactoryImpl();
+  // IntelliJ gets confused finding this broker bean when @SpringBootTest is activated
+  @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
+  @Autowired
+  private EmbeddedKafkaBroker embeddedKafka;
+  @Autowired
+  private KafkaTemplate kafkaTemplate;
+  private String tenantId;
+  private Consumer<String, AgentInstallChangeEvent> consumer;
+  private DefaultKafkaConsumerFactory<String, AgentInstallChangeEvent> consumerFactory;
+  private AgentInstallCreate create;
+  private ResourceDTO dummyResource;
+  private AgentRelease agentRelease;
+
+  @Before
+  public void setUp() {
+    tenantId = RandomStringUtils.randomAlphanumeric(10);
+    create = podamFactory.manufacturePojo(AgentInstallCreate.class);
+    agentRelease = podamFactory.manufacturePojo(AgentRelease.class);
+    AgentRelease ar2 = agentReleaseRepository.save(agentRelease);
+    create.setAgentReleaseId(ar2.getId());
+
+    dummyResource = podamFactory.manufacturePojo(ResourceDTO.class);
+    dummyResource.setAssociatedWithEnvoy(true);
+    List<ResourceDTO> resources = new ArrayList<>();
+    resources.add(dummyResource);
+    when(resourceApi.getResourcesWithLabels(anyString(), any())).thenReturn(resources);
+
+    final Map<String, Object> consumerProps = KafkaTestUtils
+        .consumerProps("testAgentInstallTransaction", "true", embeddedKafka);
+    consumerProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+    consumerProps
+        .put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+    consumerProps
+        .put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class.getName());
+    consumerProps
+        .put(ConsumerConfig.ISOLATION_LEVEL_CONFIG, "read_committed");
+
+    consumerFactory = new DefaultKafkaConsumerFactory<>(consumerProps, new StringDeserializer(),
+        new JsonDeserializer<>(AgentInstallChangeEvent.class));
+
+    consumer = consumerFactory.createConsumer();
+  }
+
+  @After
+  public void finish() {
+      consumer.close();
+  }
+
+  @Test
+  @Transactional(propagation = NOT_SUPPORTED)
+  public void testAgentInstallTransaction() {
+    String testTopic = TEST_TOPIC1;
+    KafkaTopicProperties properties = new KafkaTopicProperties();
+    properties.setInstalls(testTopic);
+    boundEventSender = new BoundEventSender(kafkaTemplate, properties);
+
+    doAnswer(invocation -> {
+//        boundEventSender.sendTo(invocation.getArgument(0), invocation.getArgument(1),
+//            invocation.getArgument(2));
+      return null;
+    })
+        .when(mockEventSender).sendTo(any(), any(), any());
+
+    agentInstallService.install(tenantId, create);
+    Iterator<AgentInstall> agentInstallIterator = agentInstallRepository.findAll().iterator();
+    AgentInstall agentInstall = agentInstallIterator.next();
+    Assert.assertEquals(agentInstall.getAgentRelease().getId(), create.getAgentReleaseId());
+    Assert.assertEquals(agentInstall.getTenantId(), tenantId);
+    Assert.assertEquals(agentInstallIterator.hasNext(), false);
+
+    Iterator<BoundAgentInstall> boundAgentInstallIterator = boundAgentInstallRepository.findAll()
+        .iterator();
+    BoundAgentInstall b = boundAgentInstallIterator.next();
+    Assert.assertEquals(b.getResourceId(), dummyResource.getResourceId());
+    Assert.assertEquals(b.getAgentInstall().getTenantId(), tenantId);
+    Assert.assertEquals(boundAgentInstallIterator.hasNext(), false);
+
+//      embeddedKafka.consumeFromEmbeddedTopics(consumer, testTopic);
+//      ConsumerRecord<String, AgentInstallChangeEvent> record = getSingleRecord(consumer, testTopic,
+//          5000);
+//      Assert.assertEquals(record.value().getResourceId(), dummyResource.getResourceId());
+
   }
 
   @TestConfiguration
@@ -114,136 +217,6 @@ public class AgentInstallTransactionTest {
 //          .setResourceManagementUrl("");
 //    }
   }
-
-    @Autowired
-    ObjectMapper objectMapper;
-    @Autowired
-    EntityManager entityManager;
-    @Autowired
-    JdbcTemplate jdbcTemplate;
-
-    @MockBean
-    BoundEventSender mockEventSender;
-
-    BoundEventSender boundEventSender;
-
-    private PodamFactory podamFactory = new PodamFactoryImpl();
-
-    // IntelliJ gets confused finding this broker bean when @SpringBootTest is activated
-    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
-    @Autowired
-    private EmbeddedKafkaBroker embeddedKafka;
-
-    @Autowired
-    private KafkaTemplate kafkaTemplate;
-
-    private String tenantId;
-
-    private Consumer<String, AgentInstallChangeEvent> consumer;
-    private DefaultKafkaConsumerFactory<String, AgentInstallChangeEvent> consumerFactory;
-
-    private AgentInstallCreate create;
-
-    @Autowired
-    AgentInstallService agentInstallService;
-
-    @Autowired
-    AgentInstallRepository agentInstallRepository;
-    @Autowired
-    BoundAgentInstallRepository boundAgentInstallRepository;
-
-    @Autowired
-    AgentReleaseRepository agentReleaseRepository;
-
-    @MockBean
-    ResourceApi resourceApi;
-
-    private ResourceDTO dummyResource;
-
-    @Autowired
-  EntityManagerFactory entityManagerFactory;
-    private AgentRelease agentRelease;
-
-
-
-
-    @Before
-    //@Transactional
-    public void setUp() {
-      tenantId = RandomStringUtils.randomAlphanumeric(10);
-      create = podamFactory.manufacturePojo(AgentInstallCreate.class);
-      agentRelease = podamFactory.manufacturePojo(AgentRelease.class);
-      AgentRelease ar2 =  agentReleaseRepository.save(agentRelease);
-      create.setAgentReleaseId(ar2.getId());
-
-      //  entityManager.flush();
-     // Optional<AgentRelease> agentRelease1 = agentReleaseRepository.findById(agentRelease.getId());
-     // System.out.println(ar2);
-//      entityManagerFactory.createEntityManager().flush();
-
-      dummyResource = podamFactory.manufacturePojo(ResourceDTO.class);
-      dummyResource.setAssociatedWithEnvoy(true);
-      List<ResourceDTO> resources = new ArrayList<>();
-      resources.add(dummyResource);
-      when(resourceApi.getResourcesWithLabels(anyString(), any())).thenReturn(resources);
-
-      final Map<String, Object> consumerProps = KafkaTestUtils
-          .consumerProps("testAgentInstallTransaction", "true", embeddedKafka);
-      consumerProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-      consumerProps
-          .put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-      consumerProps
-          .put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class.getName());
-      consumerProps
-          .put(ConsumerConfig.ISOLATION_LEVEL_CONFIG, "read_committed");
-
-      consumerFactory = new DefaultKafkaConsumerFactory<>(consumerProps, new StringDeserializer(),
-          new JsonDeserializer<>(AgentInstallChangeEvent.class));
-
-      consumer = consumerFactory.createConsumer();
-    }
-
-    @After
-    public void finish() {
-//      consumer.close();
-    }
-
-    @Test
-    @Transactional(propagation = NOT_SUPPORTED)
-    public void testAgentInstallTransaction() {
-      String testTopic = TEST_TOPIC1;
-      KafkaTopicProperties properties = new KafkaTopicProperties();
-      properties.setInstalls(testTopic);
-      boundEventSender = new BoundEventSender(kafkaTemplate, properties);
-
-      doAnswer(invocation -> {
-//        boundEventSender.sendTo(invocation.getArgument(0), invocation.getArgument(1),
-//            invocation.getArgument(2));
-        return null;
-      })
-          .when(mockEventSender).sendTo(any(), any(), any());
-
-
-      agentInstallService.install(tenantId, create);
-      Iterator<AgentInstall> agentInstallIterator = agentInstallRepository.findAll().iterator();
-      AgentInstall agentInstall = agentInstallIterator.next();
-      Assert.assertEquals(agentInstall.getAgentRelease().getId(), create.getAgentReleaseId());
-      Assert.assertEquals(agentInstall.getTenantId(), tenantId);
-      Assert.assertEquals(agentInstallIterator.hasNext(), false);
-
-      Iterator<BoundAgentInstall> boundAgentInstallIterator = boundAgentInstallRepository.findAll()
-          .iterator();
-      BoundAgentInstall b = boundAgentInstallIterator.next();
-      Assert.assertEquals(b.getResourceId(), dummyResource.getResourceId());
-      Assert.assertEquals(b.getAgentInstall().getTenantId(), tenantId);
-      Assert.assertEquals(boundAgentInstallIterator.hasNext(), false);
-
-//      embeddedKafka.consumeFromEmbeddedTopics(consumer, testTopic);
-//      ConsumerRecord<String, AgentInstallChangeEvent> record = getSingleRecord(consumer, testTopic,
-//          5000);
-//      Assert.assertEquals(record.value().getResourceId(), dummyResource.getResourceId());
-
-    }
 
 //  @Test
 //  @Transactional(propagation = NOT_SUPPORTED)
