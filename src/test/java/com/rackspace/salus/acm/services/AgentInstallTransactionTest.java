@@ -20,6 +20,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
+import static org.springframework.kafka.test.utils.KafkaTestUtils.getRecords;
 import static org.springframework.kafka.test.utils.KafkaTestUtils.getSingleRecord;
 import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED;
 
@@ -46,6 +47,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.After;
 import org.junit.Assert;
@@ -204,38 +206,42 @@ public class AgentInstallTransactionTest {
 
   }
 
-//  @Test
-//  @Transactional(propagation = NOT_SUPPORTED)
-//  public void testAgentInstallTransactionWithException() {
-//    String testTopic = TEST_TOPIC2;
-//
-//    RuntimeException runtimeException = new RuntimeException("very scary");
-//    KafkaTopicProperties properties = new KafkaTopicProperties();
-//    properties.setMonitors(testTopic);
-//    monitorEventProducer = new MonitorEventProducer(kafkaTemplate, properties);
-//
-//    //  This throws the exception after both repo's are saved and the kafka event has been sent
-//    doAnswer(invocation -> {monitorEventProducer.sendMonitorEvent(invocation.getArgument(0));
-//                            throw runtimeException;})
-//        .when(mockEventProducer).sendMonitorEvent(any());
-//    try {
-//      monitorManagement.createMonitor(tenantId, create);
-//    } catch(Exception e) {
-//      Assert.assertEquals(e, runtimeException);
-//    }
-//
-//
-//    Iterator<Monitor> monitorIterator = monitorRepository.findAll().iterator();
-//    Assert.assertEquals(monitorIterator.hasNext(), false);
-//
-//    Iterator<BoundMonitor> boundMonitorIterator = boundMonitorRepository.findAll().iterator();
-//    Assert.assertEquals(boundMonitorIterator.hasNext(), false);
-//
-//    embeddedKafka.consumeFromEmbeddedTopics(consumer, testTopic);
-//    ConsumerRecords<String, MonitorBoundEvent> records = getRecords(consumer, 5000);
-//    Iterator<ConsumerRecord<String, MonitorBoundEvent>> consumerRecordIterator = records.iterator();
-//    Assert.assertEquals(consumerRecordIterator.hasNext(), false);
-//  }
-//
+ @Test
+ @Transactional(propagation = NOT_SUPPORTED)
+ public void testAgentInstallTransactionWithException() {
+   String testTopic = TEST_TOPIC2;
+
+   RuntimeException runtimeException = new RuntimeException("very scary");
+   KafkaTopicProperties properties = new KafkaTopicProperties();
+   properties.setMonitors(testTopic);
+   boundEventSender = new BoundEventSender(kafkaTemplate, properties);
+
+   //  This throws the exception after both repo's are saved and the kafka event has been sent
+    doAnswer(invocation -> {
+        boundEventSender.sendTo(invocation.getArgument(0), invocation.getArgument(1),
+            invocation.getArgument(2));
+        throw runtimeException;
+    })
+        .when(mockEventSender).sendTo(any(), any(), any());
+
+   try {
+     agentInstallService.install(tenantId, create);
+   } catch(Exception e) {
+     Assert.assertEquals(e, runtimeException);
+   }
+    Iterator<AgentInstall> agentInstallIterator = agentInstallRepository.findAll().iterator();
+    Assert.assertEquals(agentInstallIterator.hasNext(), false);
+
+    Iterator<BoundAgentInstall> boundAgentInstallIterator = boundAgentInstallRepository.findAll()
+        .iterator();
+    Assert.assertEquals(boundAgentInstallIterator.hasNext(), false);
+
+   embeddedKafka.consumeFromEmbeddedTopics(consumer, testTopic);
+   ConsumerRecords<String, AgentInstallChangeEvent> records = getRecords(consumer, 5000);
+   Iterator<ConsumerRecord<String, AgentInstallChangeEvent>> consumerRecordIterator = records.iterator();
+   Assert.assertEquals(consumerRecordIterator.hasNext(), false);
+
+ }
+
 
 }
