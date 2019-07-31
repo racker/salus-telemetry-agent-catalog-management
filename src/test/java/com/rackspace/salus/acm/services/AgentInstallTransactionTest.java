@@ -20,6 +20,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
+import static org.springframework.kafka.test.utils.KafkaTestUtils.getSingleRecord;
 import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,6 +45,7 @@ import javax.persistence.EntityManagerFactory;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.After;
 import org.junit.Assert;
@@ -175,8 +177,8 @@ public class AgentInstallTransactionTest {
     boundEventSender = new BoundEventSender(kafkaTemplate, properties);
 
     doAnswer(invocation -> {
-//        boundEventSender.sendTo(invocation.getArgument(0), invocation.getArgument(1),
-//            invocation.getArgument(2));
+        boundEventSender.sendTo(invocation.getArgument(0), invocation.getArgument(1),
+            invocation.getArgument(2));
       return null;
     })
         .when(mockEventSender).sendTo(any(), any(), any());
@@ -195,27 +197,11 @@ public class AgentInstallTransactionTest {
     Assert.assertEquals(b.getAgentInstall().getTenantId(), tenantId);
     Assert.assertEquals(boundAgentInstallIterator.hasNext(), false);
 
-//      embeddedKafka.consumeFromEmbeddedTopics(consumer, testTopic);
-//      ConsumerRecord<String, AgentInstallChangeEvent> record = getSingleRecord(consumer, testTopic,
-//          5000);
-//      Assert.assertEquals(record.value().getResourceId(), dummyResource.getResourceId());
+      embeddedKafka.consumeFromEmbeddedTopics(consumer, testTopic);
+      ConsumerRecord<String, AgentInstallChangeEvent> record = getSingleRecord(consumer, testTopic,
+          5000);
+      Assert.assertEquals(record.value().getResourceId(), dummyResource.getResourceId());
 
-  }
-
-  @TestConfiguration
-  @EnableJpaKafkaTransactions
-  public static class Config {
-
-//    @Bean
-//    public ZonesProperties zonesProperties() {
-//      return new ZonesProperties();
-//    }
-//
-//    @Bean
-//    public ServicesProperties servicesProperties() {
-//      return new ServicesProperties()
-//          .setResourceManagementUrl("");
-//    }
   }
 
 //  @Test
