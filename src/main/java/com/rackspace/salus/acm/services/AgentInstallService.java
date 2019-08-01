@@ -214,6 +214,8 @@ public class AgentInstallService {
   }
 
   private void bindInstallToResources(AgentInstall agentInstall) {
+    log.debug("Querying selected resources for binding agentInstall={}", agentInstall);
+
     final List<ResourceDTO> resources = resourceApi
         .getResourcesWithLabels(agentInstall.getTenantId(), agentInstall.getLabelSelector());
 
