@@ -91,13 +91,7 @@ public class AgentInstallService {
         .setTenantId(tenantId);
 
     final AgentInstall saved = agentInstallRepository.save(agentInstall);
-
-    final List<BoundAgentInstall> newBindings = new ArrayList<>();
-    BoundAgentInstall binding =  new BoundAgentInstall().setAgentInstall(saved).setResourceId("dummyId");
-    newBindings.add(binding);
-
-    final List<BoundAgentInstall> others = boundAgentInstallRepository.findAllByAgentInstall_Id(binding.getAgentInstall().getId());
-    boundAgentInstallRepository.saveAll(newBindings);
+    final List<BoundAgentInstall> others = boundAgentInstallRepository.findAllByAgentInstall_Id(agentInstall.getId());
     throw new RuntimeException("Transaction Test Exception");
   }
 
@@ -210,10 +204,12 @@ public class AgentInstallService {
 
     log.debug("Found resources={} matching selector of agentInstall={}", resources, agentInstall);
 
-    // Force a dummy binding, even if one doesn't exist, for transaction test purposes
-    final List<BoundAgentInstall> newBindings = new ArrayList<>();
-    newBindings.add(
-      new BoundAgentInstall().setAgentInstall(agentInstall).setResourceId("dummyId"));
+    final List<BoundAgentInstall> newBindings = resources.stream()
+        .map(resourceDTO -> new BoundAgentInstall()
+            .setAgentInstall(agentInstall)
+            .setResourceId(resourceDTO.getResourceId())
+        )
+        .collect(Collectors.toList());
 
     final List<TenantResource> affectedResources = saveNewBindings(newBindings);
 
