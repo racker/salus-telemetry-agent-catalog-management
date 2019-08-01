@@ -219,7 +219,7 @@ public class AgentInstallService {
 
     log.debug("Found resources={} matching selector of agentInstall={}", resources, agentInstall);
 
-    // Force a dummy binding for test purposes
+    // Force a dummy binding, even if one doesn't exist, for transaction test purposes
     final List<BoundAgentInstall> newBindings = new ArrayList<>();
     newBindings.add(
       new BoundAgentInstall().setAgentInstall(agentInstall).setResourceId("dummyId"));
