@@ -82,20 +82,8 @@ public class AgentInstallService {
 
   @Transactional
   public AgentInstallDTO install(String tenantId, AgentInstallCreate in) {
-    Assert.notNull(tenantId, "tenantId is required");
-
-    log.debug("Creating install={} for tenant={}", in, tenantId);
-
     final AgentRelease agentRelease = agentReleaseRepository.findById(in.getAgentReleaseId())
         .orElseThrow(() -> new NotFoundException("Could not find associated agent release"));
-
-    final List<AgentInstall> existing = agentInstallRepository
-        .findAllByTenantIdAndAgentRelease_Id(tenantId, in.getAgentReleaseId());
-
-    if (existing.stream()
-        .anyMatch(agentInstall -> agentInstall.getLabelSelector().equals(in.getLabelSelector()))) {
-      throw new AlreadyExistsException("AgentInstall with same release and label selector exists");
-    }
 
     final AgentInstall agentInstall = new AgentInstall()
         .setAgentRelease(agentRelease)
@@ -104,9 +92,11 @@ public class AgentInstallService {
 
     final AgentInstall saved = agentInstallRepository.save(agentInstall);
 
-    bindInstallToResources(saved);
+    final List<BoundAgentInstall> newBindings = new ArrayList<>();
+    newBindings.add(
+      new BoundAgentInstall().setAgentInstall(saved).setResourceId("dummyId"));
 
-    log.info("Created agentInstall={}", saved);
+    boundAgentInstallRepository.saveAll(newBindings);
     throw new RuntimeException("Transaction Test Exception");
   }
 
