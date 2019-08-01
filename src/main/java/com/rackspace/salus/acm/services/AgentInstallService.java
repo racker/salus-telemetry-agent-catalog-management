@@ -107,7 +107,6 @@ public class AgentInstallService {
     bindInstallToResources(saved);
 
     log.info("Created agentInstall={}", saved);
-
     throw new RuntimeException("Transaction Test Exception");
   }
 
