@@ -24,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -427,6 +428,55 @@ public class AgentInstallServiceTest {
     assertThat(bindings).isEmpty();
 
     verify(resourceApi).getResourcesWithLabels("t-1", labelSelector);
+
+    verifyNoMoreInteractions(boundEventSender, resourceApi);
+  }
+
+  @Test
+  public void testInstall_exceptionDuringBoundEventSender() {
+    final AgentRelease release2 = saveRelease("2.0.0", TELEGRAF);
+
+    when(resourceApi.getResourcesWithLabels(eq("t-1"), any()))
+        .thenReturn(Collections.singletonList(
+            new ResourceDTO().setTenantId("t-1").setResourceId("r-1")
+        ));
+
+    doThrow(new IllegalStateException("error during sendTo"))
+        .when(boundEventSender).sendTo(any(), any(), any());
+
+    // EXECUTE
+    log.debug("Executing test case");
+
+    final Map<String, String> labelSelector = Collections.singletonMap("os", "linux");
+
+    assertThatIllegalStateException()
+        .isThrownBy(() -> {
+          agentInstallService.install(
+              "t-1",
+              new AgentInstallCreate()
+                  .setAgentReleaseId(release2.getId())
+                  .setLabelSelector(labelSelector)
+          );
+        });
+
+    // VERIFY
+
+    log.debug("Verifying");
+
+    final Iterable<AgentInstall> saved = agentInstallRepository.findAll();
+    assertThat(saved).isEmpty();
+
+    final Iterable<BoundAgentInstall> bindings = boundAgentInstallRepository.findAll();
+    assertThat(bindings).isEmpty();
+
+    verify(resourceApi).getResourcesWithLabels("t-1", labelSelector);
+
+    verify(boundEventSender)
+        .sendTo(eq(OperationType.UPSERT), eq(TELEGRAF), tenantResourcesArg.capture());
+    assertThat(tenantResourcesArg.getValue())
+        .containsExactlyInAnyOrder(
+            new TenantResource("t-1", "r-1")
+        );
 
     verifyNoMoreInteractions(boundEventSender, resourceApi);
   }

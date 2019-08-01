@@ -231,6 +231,9 @@ public class AgentInstallService {
     final List<TenantResource> affectedResources = saveNewBindings(newBindings);
 
     if (!affectedResources.isEmpty()) {
+      log.debug("Sending upserts to affectedResources={} due to install of agentInstall={}",
+          affectedResources, agentInstall);
+
       boundEventSender.sendTo(
           OperationType.UPSERT, agentInstall.getAgentRelease().getType(), affectedResources);
     }
