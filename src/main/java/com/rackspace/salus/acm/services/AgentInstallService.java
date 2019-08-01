@@ -93,9 +93,15 @@ public class AgentInstallService {
     final AgentInstall saved = agentInstallRepository.save(agentInstall);
 
     final List<BoundAgentInstall> newBindings = new ArrayList<>();
-    newBindings.add(
-      new BoundAgentInstall().setAgentInstall(saved).setResourceId("dummyId"));
+    BoundAgentInstall binding =  new BoundAgentInstall().setAgentInstall(saved).setResourceId("dummyId");
+    newBindings.add(binding);
 
+    final List<BoundAgentInstall> others = boundAgentInstallRepository
+        .findAllByTenantResourceAgentType(
+            binding.getAgentInstall().getTenantId(),
+            binding.getResourceId(),
+            binding.getAgentInstall().getAgentRelease().getType()
+        );      
     boundAgentInstallRepository.saveAll(newBindings);
     throw new RuntimeException("Transaction Test Exception");
   }
