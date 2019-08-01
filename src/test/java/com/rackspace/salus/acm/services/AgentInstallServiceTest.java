@@ -20,6 +20,7 @@ import static com.rackspace.salus.telemetry.model.AgentType.FILEBEAT;
 import static com.rackspace.salus.telemetry.model.AgentType.TELEGRAF;
 import static java.util.Collections.emptyMap;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -52,6 +53,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.persistence.EntityManager;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -68,9 +70,13 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 @SuppressWarnings("OptionalGetWithoutIsPresent")
 @RunWith(SpringRunner.class)
-@SpringBootTest
+@SpringBootTest(properties = {
+    "logging.level.org.hibernate.engine.transaction=debug",
+    "logging.level.com.rackspace.salus.acm.services.AgentInstallServiceTest=debug"
+})
 @AutoConfigureTestDatabase
 @EnableAutoConfiguration(exclude = KafkaAutoConfiguration.class)
+@Slf4j
 public class AgentInstallServiceTest {
 
   @MockBean
@@ -108,6 +114,7 @@ public class AgentInstallServiceTest {
 
   @After
   public void tearDown() {
+    log.debug("Purging repositories");
     boundAgentInstallRepository.deleteAll();
     agentInstallRepository.deleteAll();
     agentReleaseRepository.deleteAll();
@@ -382,6 +389,43 @@ public class AgentInstallServiceTest {
         .containsExactlyInAnyOrder(
             new TenantResource("t-1", "r-1")
         );
+
+    verifyNoMoreInteractions(boundEventSender, resourceApi);
+  }
+
+  @Test
+  public void testInstall_exceptionDuringResourceApi() {
+    final AgentRelease release2 = saveRelease("2.0.0", TELEGRAF);
+
+    when(resourceApi.getResourcesWithLabels(eq("t-1"), any()))
+        .thenThrow(new IllegalStateException(("something unexpected happened")));
+
+    // EXECUTE
+    log.debug("Executing test case");
+
+    final Map<String, String> labelSelector = Collections.singletonMap("os", "linux");
+
+    assertThatIllegalStateException()
+        .isThrownBy(() -> {
+          agentInstallService.install(
+              "t-1",
+              new AgentInstallCreate()
+                  .setAgentReleaseId(release2.getId())
+                  .setLabelSelector(labelSelector)
+          );
+        });
+
+    // VERIFY
+
+    log.debug("Verifying");
+
+    final Iterable<AgentInstall> saved = agentInstallRepository.findAll();
+    assertThat(saved).isEmpty();
+
+    final Iterable<BoundAgentInstall> bindings = boundAgentInstallRepository.findAll();
+    assertThat(bindings).isEmpty();
+
+    verify(resourceApi).getResourcesWithLabels("t-1", labelSelector);
 
     verifyNoMoreInteractions(boundEventSender, resourceApi);
   }

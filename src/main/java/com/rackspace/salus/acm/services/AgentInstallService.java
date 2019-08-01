@@ -47,6 +47,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -79,6 +80,7 @@ public class AgentInstallService {
     this.boundEventSender = boundEventSender;
   }
 
+  @Transactional
   public AgentInstallDTO install(String tenantId, AgentInstallCreate in) {
     Assert.notNull(tenantId, "tenantId is required");
 
