@@ -47,6 +47,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -79,6 +80,7 @@ public class AgentInstallService {
     this.boundEventSender = boundEventSender;
   }
 
+  @Transactional
   public AgentInstallDTO install(String tenantId, AgentInstallCreate in) {
     Assert.notNull(tenantId, "tenantId is required");
 
@@ -105,7 +107,9 @@ public class AgentInstallService {
     bindInstallToResources(saved);
 
     log.info("Created agentInstall={}", saved);
-    return saved.toDTO();
+
+    // return saved.toDTO();
+    throw new RuntimeException("Transaction Test Exception");
   }
 
   public void delete(String tenantId, UUID agentInstallId) {
@@ -217,12 +221,11 @@ public class AgentInstallService {
 
     log.debug("Found resources={} matching selector of agentInstall={}", resources, agentInstall);
 
-    final List<BoundAgentInstall> newBindings = resources.stream()
-        .map(resourceDTO -> new BoundAgentInstall()
+    // Force a dummy binding for test purposes
+    final List<BoundAgentInstall> newBindings = new ArrayList<>();
+    newBindings.add(new BoundAgentInstall()
             .setAgentInstall(agentInstall)
-            .setResourceId(resourceDTO.getResourceId())
-        )
-        .collect(Collectors.toList());
+            .setResourceId("dummyId"));
 
     final List<TenantResource> affectedResources = saveNewBindings(newBindings);
 
