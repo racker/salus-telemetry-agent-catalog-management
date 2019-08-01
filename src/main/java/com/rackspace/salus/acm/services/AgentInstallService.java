@@ -108,7 +108,6 @@ public class AgentInstallService {
 
     log.info("Created agentInstall={}", saved);
 
-    // return saved.toDTO();
     throw new RuntimeException("Transaction Test Exception");
   }
 
@@ -223,9 +222,8 @@ public class AgentInstallService {
 
     // Force a dummy binding for test purposes
     final List<BoundAgentInstall> newBindings = new ArrayList<>();
-    newBindings.add(new BoundAgentInstall()
-            .setAgentInstall(agentInstall)
-            .setResourceId("dummyId"));
+    newBindings.add(
+      new BoundAgentInstall().setAgentInstall(agentInstall).setResourceId("dummyId"));
 
     final List<TenantResource> affectedResources = saveNewBindings(newBindings);
 
