@@ -24,7 +24,6 @@ import com.rackspace.salus.acm.repositories.AgentInstallRepository;
 import com.rackspace.salus.acm.repositories.AgentReleaseRepository;
 import com.rackspace.salus.acm.repositories.BoundAgentInstallRepository;
 import com.rackspace.salus.acm.web.model.AgentInstallCreate;
-import com.rackspace.salus.acm.web.model.AgentInstallDTO;
 import com.rackspace.salus.resource_management.web.client.ResourceApi;
 import com.rackspace.salus.resource_management.web.model.ResourceDTO;
 import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
@@ -81,7 +80,7 @@ public class AgentInstallService {
   }
 
   @Transactional
-  public AgentInstallDTO install(String tenantId, AgentInstallCreate in) {
+  public AgentInstall install(String tenantId, AgentInstallCreate in) {
     Assert.notNull(tenantId, "tenantId is required");
 
     log.debug("Creating install={} for tenant={}", in, tenantId);
@@ -107,7 +106,7 @@ public class AgentInstallService {
     bindInstallToResources(saved);
 
     log.info("Created agentInstall={}", saved);
-    return saved.toDTO();
+    return saved;
   }
 
   public void delete(String tenantId, UUID agentInstallId) {

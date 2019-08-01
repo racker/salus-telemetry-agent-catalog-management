@@ -101,7 +101,7 @@ public class AgentInstallController implements AgentInstallApi {
   @ApiOperation(value = "Create a new agent installation")
   public AgentInstallDTO create(@PathVariable String tenantId,
                                 @RequestBody AgentInstallCreate in) {
-    return agentInstallService.install(tenantId, in);
+    return agentInstallService.install(tenantId, in).toDTO();
   }
 
   @DeleteMapping("/tenant/{tenantId}/agent-installs/{agentInstallId}")

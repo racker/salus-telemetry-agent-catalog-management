@@ -131,7 +131,7 @@ public class AgentInstallControllerTest {
     final AgentInstall install = populateInstall(release);
 
     when(agentInstallService.install(any(), any()))
-        .thenReturn(install.toDTO());
+        .thenReturn(install);
 
     mockMvc.perform(
         post("/api/tenant/{tenantId}/agent-installs", "t-1")

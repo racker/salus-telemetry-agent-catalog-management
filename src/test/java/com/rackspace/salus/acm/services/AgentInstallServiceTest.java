@@ -274,7 +274,7 @@ public class AgentInstallServiceTest {
         new AgentInstallCreate()
             .setAgentReleaseId(release1.getId())
             .setLabelSelector(labelSelector)
-    );
+    ).toDTO();
 
     // VERIFY
 
@@ -320,7 +320,7 @@ public class AgentInstallServiceTest {
         new AgentInstallCreate()
             .setAgentReleaseId(release1.getId())
             .setLabelSelector(labelSelector)
-    );
+    ).toDTO();
 
     // VERIFY
 
@@ -363,7 +363,7 @@ public class AgentInstallServiceTest {
         new AgentInstallCreate()
             .setAgentReleaseId(release2.getId())
             .setLabelSelector(labelSelector)
-    );
+    ).toDTO();
 
     // VERIFY
 
@@ -505,7 +505,7 @@ public class AgentInstallServiceTest {
             // but user requested 1.0.0
             .setAgentReleaseId(release1.getId())
             .setLabelSelector(labelSelector)
-    );
+    ).toDTO();
 
     // VERIFY
 
@@ -561,7 +561,7 @@ public class AgentInstallServiceTest {
             // but user requested 1.0.0
             .setAgentReleaseId(release1.getId())
             .setLabelSelector(labelSelector)
-    );
+    ).toDTO();
 
     // VERIFY
 
