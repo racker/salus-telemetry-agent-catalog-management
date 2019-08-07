@@ -16,6 +16,7 @@
 
 package com.rackspace.salus.acm.web.model;
 
+import com.rackspace.salus.telemetry.entities.BoundAgentInstall;
 import lombok.Data;
 
 @Data
@@ -23,4 +24,9 @@ public class BoundAgentInstallDTO {
   String resourceId;
 
   AgentInstallDTO agentInstall;
+
+  public BoundAgentInstallDTO(BoundAgentInstall boundAgentInstall) {
+    this.resourceId = boundAgentInstall.getResourceId();
+    this.agentInstall = new AgentInstallDTO(boundAgentInstall.getAgentInstall());
+  }
 }

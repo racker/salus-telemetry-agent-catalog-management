@@ -28,11 +28,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.rackspace.salus.acm.entities.AgentInstall;
-import com.rackspace.salus.acm.entities.AgentRelease;
-import com.rackspace.salus.acm.entities.BoundAgentInstall;
-import com.rackspace.salus.acm.repositories.AgentInstallRepository;
-import com.rackspace.salus.acm.repositories.BoundAgentInstallRepository;
+import com.rackspace.salus.telemetry.entities.AgentInstall;
+import com.rackspace.salus.telemetry.entities.AgentRelease;
+import com.rackspace.salus.telemetry.entities.BoundAgentInstall;
+import com.rackspace.salus.telemetry.repositories.AgentInstallRepository;
+import com.rackspace.salus.telemetry.repositories.BoundAgentInstallRepository;
 import com.rackspace.salus.acm.services.AgentInstallService;
 import com.rackspace.salus.acm.web.model.AgentInstallCreate;
 import com.rackspace.salus.telemetry.model.AgentType;
@@ -131,7 +131,7 @@ public class AgentInstallControllerTest {
     final AgentInstall install = populateInstall(release);
 
     when(agentInstallService.install(any(), any()))
-        .thenReturn(install.toDTO());
+        .thenReturn(install);
 
     mockMvc.perform(
         post("/api/tenant/{tenantId}/agent-installs", "t-1")

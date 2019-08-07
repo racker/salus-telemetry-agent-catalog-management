@@ -14,19 +14,15 @@
  * limitations under the License.
  */
 
-package com.rackspace.salus.acm.repositories;
+package com.rackspace.salus.acm.config;
 
-import com.rackspace.salus.acm.entities.AgentRelease;
-import com.rackspace.salus.telemetry.model.AgentType;
-import java.util.List;
-import java.util.UUID;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
-public interface AgentReleaseRepository extends CrudRepository<AgentRelease, UUID> {
+@EntityScan("com.rackspace.salus.telemetry.entities")
+@EnableJpaRepositories("com.rackspace.salus.telemetry.repositories")
+@Configuration
+public class DatabaseConfig {
 
-  List<AgentRelease> findAllByTypeAndVersion(AgentType agentType, String version);
-
-  Page<AgentRelease> findAll(Pageable pageable);
 }

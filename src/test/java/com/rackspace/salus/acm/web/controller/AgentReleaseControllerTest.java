@@ -28,8 +28,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.rackspace.salus.acm.entities.AgentRelease;
-import com.rackspace.salus.acm.repositories.AgentReleaseRepository;
+import com.rackspace.salus.telemetry.entities.AgentRelease;
+import com.rackspace.salus.telemetry.repositories.AgentReleaseRepository;
 import com.rackspace.salus.acm.services.AgentReleaseService;
 import com.rackspace.salus.acm.web.model.AgentReleaseCreate;
 import com.rackspace.salus.telemetry.model.AgentType;
@@ -161,7 +161,7 @@ public class AgentReleaseControllerTest {
     final AgentRelease release = populateRelease();
 
     when(agentReleaseService.create(any()))
-        .thenReturn(release.toDTO());
+        .thenReturn(release);
 
     mockMvc.perform(
         post("/api/admin/agent-releases")

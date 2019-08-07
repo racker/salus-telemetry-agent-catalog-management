@@ -21,12 +21,11 @@ import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
-import com.rackspace.salus.acm.entities.AgentInstall;
-import com.rackspace.salus.acm.entities.AgentRelease;
-import com.rackspace.salus.acm.repositories.AgentInstallRepository;
-import com.rackspace.salus.acm.repositories.AgentReleaseRepository;
+import com.rackspace.salus.telemetry.entities.AgentInstall;
+import com.rackspace.salus.telemetry.entities.AgentRelease;
+import com.rackspace.salus.telemetry.repositories.AgentInstallRepository;
+import com.rackspace.salus.telemetry.repositories.AgentReleaseRepository;
 import com.rackspace.salus.acm.web.model.AgentReleaseCreate;
-import com.rackspace.salus.acm.web.model.AgentReleaseDTO;
 import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
 import com.rackspace.salus.telemetry.model.AgentType;
 import java.util.HashMap;
@@ -74,14 +73,14 @@ public class AgentReleaseServiceTest {
         .setUrl(
             "https://dl.influxdata.com/telegraf/releases/telegraf-1.11.0-static_linux_amd64.tar.gz")
         .setExe("./telegraf/telegraf");
-    final AgentReleaseDTO agentReleaseDTO = agentReleaseService.create(in);
+    final AgentRelease agentRelease = agentReleaseService.create(in);
 
-    assertThat(agentReleaseDTO).isNotNull();
-    assertThat(agentReleaseDTO.getType()).isEqualTo(in.getType());
-    assertThat(agentReleaseDTO.getVersion()).isEqualTo(in.getVersion());
-    assertThat(agentReleaseDTO.getLabels()).isEqualTo(in.getLabels());
-    assertThat(agentReleaseDTO.getUrl()).isEqualTo(in.getUrl());
-    assertThat(agentReleaseDTO.getExe()).isEqualTo(in.getExe());
+    assertThat(agentRelease).isNotNull();
+    assertThat(agentRelease.getType()).isEqualTo(in.getType());
+    assertThat(agentRelease.getVersion()).isEqualTo(in.getVersion());
+    assertThat(agentRelease.getLabels()).isEqualTo(in.getLabels());
+    assertThat(agentRelease.getUrl()).isEqualTo(in.getUrl());
+    assertThat(agentRelease.getExe()).isEqualTo(in.getExe());
   }
 
   @Test
