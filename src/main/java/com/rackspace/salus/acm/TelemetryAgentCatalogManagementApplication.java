@@ -18,16 +18,13 @@ package com.rackspace.salus.acm;
 
 import com.rackspace.salus.common.messaging.EnableSalusKafkaMessaging;
 import com.rackspace.salus.common.util.DumpConfigProperties;
-import com.rackspace.salus.common.web.ExtendedErrorAttributesConfig;
+import com.rackspace.salus.common.web.EnableExtendedErrorAttributes;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Import;
 
 @SpringBootApplication
 @EnableSalusKafkaMessaging
-@Import({
-    ExtendedErrorAttributesConfig.class
-})
+@EnableExtendedErrorAttributes
 public class TelemetryAgentCatalogManagementApplication {
 
   public static void main(String[] args) {

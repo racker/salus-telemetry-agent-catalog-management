@@ -16,10 +16,9 @@
 
 package com.rackspace.salus.acm.services;
 
-import com.rackspace.salus.acm.entities.AgentRelease;
-import com.rackspace.salus.acm.repositories.AgentReleaseRepository;
+import com.rackspace.salus.telemetry.entities.AgentRelease;
+import com.rackspace.salus.telemetry.repositories.AgentReleaseRepository;
 import com.rackspace.salus.acm.web.model.AgentReleaseCreate;
-import com.rackspace.salus.acm.web.model.AgentReleaseDTO;
 import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
 import java.util.List;
 import java.util.UUID;
@@ -38,7 +37,7 @@ public class AgentReleaseService {
     this.repository = repository;
   }
 
-  public AgentReleaseDTO create(AgentReleaseCreate in) {
+  public AgentRelease create(AgentReleaseCreate in) {
 
     final List<AgentRelease> existing = repository
         .findAllByTypeAndVersion(in.getType(), in.getVersion());
@@ -60,7 +59,7 @@ public class AgentReleaseService {
         .save(agentRelease);
 
     log.info("Created agentRelease={}", saved);
-    return saved.toDTO();
+    return saved;
   }
 
   public void delete(UUID agentReleaseId) {

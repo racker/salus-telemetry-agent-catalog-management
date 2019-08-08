@@ -27,14 +27,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import com.rackspace.salus.acm.entities.AgentInstall;
-import com.rackspace.salus.acm.entities.AgentRelease;
-import com.rackspace.salus.acm.entities.BoundAgentInstall;
-import com.rackspace.salus.acm.repositories.AgentInstallRepository;
-import com.rackspace.salus.acm.repositories.AgentReleaseRepository;
-import com.rackspace.salus.acm.repositories.BoundAgentInstallRepository;
+import com.rackspace.salus.telemetry.entities.AgentInstall;
+import com.rackspace.salus.telemetry.entities.AgentRelease;
+import com.rackspace.salus.telemetry.entities.BoundAgentInstall;
+import com.rackspace.salus.telemetry.repositories.AgentInstallRepository;
+import com.rackspace.salus.telemetry.repositories.AgentReleaseRepository;
+import com.rackspace.salus.telemetry.repositories.BoundAgentInstallRepository;
 import com.rackspace.salus.acm.web.model.AgentInstallCreate;
-import com.rackspace.salus.acm.web.model.AgentInstallDTO;
 import com.rackspace.salus.resource_management.web.client.ResourceApi;
 import com.rackspace.salus.resource_management.web.model.ResourceDTO;
 import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
@@ -260,7 +259,7 @@ public class AgentInstallServiceTest {
     // EXECUTE
 
     final Map<String, String> labelSelector = Collections.singletonMap("os", "linux");
-    final AgentInstallDTO install = agentInstallService.install(
+    final AgentInstall install = agentInstallService.install(
         "t-1",
         new AgentInstallCreate()
             .setAgentReleaseId(release1.getId())
@@ -306,7 +305,7 @@ public class AgentInstallServiceTest {
     // EXECUTE
 
     final Map<String, String> labelSelector = Collections.singletonMap("os", "linux");
-    final AgentInstallDTO install = agentInstallService.install(
+    final AgentInstall install = agentInstallService.install(
         "t-1",
         new AgentInstallCreate()
             .setAgentReleaseId(release1.getId())
@@ -349,7 +348,7 @@ public class AgentInstallServiceTest {
     // EXECUTE
 
     final Map<String, String> labelSelector = Collections.singletonMap("os", "linux");
-    final AgentInstallDTO dto = agentInstallService.install(
+    final AgentInstall agentInstall = agentInstallService.install(
         "t-1",
         new AgentInstallCreate()
             .setAgentReleaseId(release2.getId())
@@ -358,12 +357,12 @@ public class AgentInstallServiceTest {
 
     // VERIFY
 
-    assertThat(dto.getId()).isNotNull();
-    assertThat(dto.getAgentRelease().getId()).isEqualTo(release2.getId());
+    assertThat(agentInstall.getId()).isNotNull();
+    assertThat(agentInstall.getAgentRelease().getId()).isEqualTo(release2.getId());
 
-    final Optional<AgentInstall> saved = agentInstallRepository.findById(dto.getId());
+    final Optional<AgentInstall> saved = agentInstallRepository.findById(agentInstall.getId());
     assertThat(saved).isPresent();
-    assertThat(saved.get().getId()).isEqualTo(dto.getId());
+    assertThat(saved.get().getId()).isEqualTo(agentInstall.getId());
     assertThat(saved.get().getTenantId()).isEqualTo("t-1");
     assertThat(saved.get().getAgentRelease().getId()).isEqualTo(release2.getId());
 
@@ -371,7 +370,7 @@ public class AgentInstallServiceTest {
     assertThat(bindings).hasSize(1);
     final BoundAgentInstall savedBinding = bindings.iterator().next();
     assertThat(savedBinding.getResourceId()).isEqualTo("r-1");
-    assertThat(savedBinding.getAgentInstall().getId()).isEqualTo(dto.getId());
+    assertThat(savedBinding.getAgentInstall().getId()).isEqualTo(agentInstall.getId());
     assertThat(savedBinding.getAgentInstall().getAgentRelease()).isEqualTo(release2);
 
     verify(resourceApi).getResourcesWithLabels("t-1", labelSelector);
@@ -404,7 +403,7 @@ public class AgentInstallServiceTest {
     // EXECUTE
 
     final Map<String, String> labelSelector = Collections.singletonMap("os", "linux");
-    final AgentInstallDTO dto = agentInstallService.install(
+    final AgentInstall agentInstall = agentInstallService.install(
         "t-1",
         new AgentInstallCreate()
             // but user requested 1.0.0
@@ -414,12 +413,12 @@ public class AgentInstallServiceTest {
 
     // VERIFY
 
-    assertThat(dto.getId()).isNotNull();
-    assertThat(dto.getAgentRelease().getId()).isEqualTo(release1.getId());
+    assertThat(agentInstall.getId()).isNotNull();
+    assertThat(agentInstall.getAgentRelease().getId()).isEqualTo(release1.getId());
 
-    final Optional<AgentInstall> saved = agentInstallRepository.findById(dto.getId());
+    final Optional<AgentInstall> saved = agentInstallRepository.findById(agentInstall.getId());
     assertThat(saved).isPresent();
-    assertThat(saved.get().getId()).isEqualTo(dto.getId());
+    assertThat(saved.get().getId()).isEqualTo(agentInstall.getId());
     assertThat(saved.get().getTenantId()).isEqualTo("t-1");
     assertThat(saved.get().getAgentRelease().getId()).isEqualTo(release1.getId());
 
@@ -460,7 +459,7 @@ public class AgentInstallServiceTest {
     // EXECUTE
 
     final Map<String, String> labelSelector = Collections.singletonMap("os", "linux");
-    final AgentInstallDTO dto = agentInstallService.install(
+    final AgentInstall agentInstall = agentInstallService.install(
         "t-1",
         new AgentInstallCreate()
             // but user requested 1.0.0
@@ -470,13 +469,13 @@ public class AgentInstallServiceTest {
 
     // VERIFY
 
-    assertThat(dto.getId()).isNotNull();
-    assertThat(dto.getAgentRelease().getId()).isEqualTo(release1.getId());
+    assertThat(agentInstall.getId()).isNotNull();
+    assertThat(agentInstall.getAgentRelease().getId()).isEqualTo(release1.getId());
 
     // install saved as normal
-    final Optional<AgentInstall> saved = agentInstallRepository.findById(dto.getId());
+    final Optional<AgentInstall> saved = agentInstallRepository.findById(agentInstall.getId());
     assertThat(saved).isPresent();
-    assertThat(saved.get().getId()).isEqualTo(dto.getId());
+    assertThat(saved.get().getId()).isEqualTo(agentInstall.getId());
     assertThat(saved.get().getTenantId()).isEqualTo("t-1");
     assertThat(saved.get().getAgentRelease().getId()).isEqualTo(release1.getId());
 

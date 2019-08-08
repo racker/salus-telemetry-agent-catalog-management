@@ -17,8 +17,7 @@
 package com.rackspace.salus.acm.web.controller;
 
 import com.fasterxml.jackson.annotation.JsonView;
-import com.rackspace.salus.acm.entities.AgentRelease;
-import com.rackspace.salus.acm.repositories.AgentReleaseRepository;
+import com.rackspace.salus.telemetry.repositories.AgentReleaseRepository;
 import com.rackspace.salus.acm.services.AgentReleaseService;
 import com.rackspace.salus.acm.web.model.AgentReleaseCreate;
 import com.rackspace.salus.acm.web.model.AgentReleaseDTO;
@@ -75,7 +74,7 @@ public class AgentReleaseController {
 
     return PagedContent.fromPage(
         agentReleaseRepository.findAll(pageable)
-            .map(AgentRelease::toDTO)
+            .map(AgentReleaseDTO::new)
     );
 
   }
@@ -89,9 +88,9 @@ public class AgentReleaseController {
     // tenantId isn't actually used, but it present to keep a consitent request path structure
     // across other APIs
 
-    return agentReleaseRepository.findById(agentReleaseId)
-        .orElseThrow(() -> new NotFoundException("Unable to find agent release"))
-        .toDTO();
+    return new AgentReleaseDTO(
+        agentReleaseRepository.findById(agentReleaseId)
+            .orElseThrow(() -> new NotFoundException("Unable to find agent release")));
   }
 
   @GetMapping("/admin/agent-releases")
@@ -101,7 +100,7 @@ public class AgentReleaseController {
 
     return PagedContent.fromPage(
         agentReleaseRepository.findAll(pageable)
-            .map(AgentRelease::toDTO)
+            .map(AgentReleaseDTO::new)
     );
 
   }
@@ -111,9 +110,9 @@ public class AgentReleaseController {
   @ApiOperation(value = "Get a specific agent release")
   public AgentReleaseDTO getAgentRelease(@PathVariable UUID agentReleaseId) {
 
-    return agentReleaseRepository.findById(agentReleaseId)
-        .orElseThrow(() -> new NotFoundException("Unable to find agent release"))
-        .toDTO();
+    return new AgentReleaseDTO(
+        agentReleaseRepository.findById(agentReleaseId)
+            .orElseThrow(() -> new NotFoundException("Unable to find agent release")));
   }
 
   @PostMapping("/admin/agent-releases")
@@ -121,7 +120,7 @@ public class AgentReleaseController {
   @JsonView(View.Admin.class)
   @ApiOperation(value = "Declare a new agent release")
   public AgentReleaseDTO declareAgentRelease(@RequestBody @Valid AgentReleaseCreate in) {
-    return agentReleaseService.create(in);
+    return new AgentReleaseDTO(agentReleaseService.create(in));
   }
 
   @DeleteMapping("/admin/agent-releases/{agentReleaseId}")

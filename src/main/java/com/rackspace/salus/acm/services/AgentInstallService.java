@@ -17,14 +17,13 @@
 package com.rackspace.salus.acm.services;
 
 import com.github.zafarkhaja.semver.Version;
-import com.rackspace.salus.acm.entities.AgentInstall;
-import com.rackspace.salus.acm.entities.AgentRelease;
-import com.rackspace.salus.acm.entities.BoundAgentInstall;
-import com.rackspace.salus.acm.repositories.AgentInstallRepository;
-import com.rackspace.salus.acm.repositories.AgentReleaseRepository;
-import com.rackspace.salus.acm.repositories.BoundAgentInstallRepository;
+import com.rackspace.salus.telemetry.entities.AgentInstall;
+import com.rackspace.salus.telemetry.entities.AgentRelease;
+import com.rackspace.salus.telemetry.entities.BoundAgentInstall;
+import com.rackspace.salus.telemetry.repositories.AgentInstallRepository;
+import com.rackspace.salus.telemetry.repositories.AgentReleaseRepository;
+import com.rackspace.salus.telemetry.repositories.BoundAgentInstallRepository;
 import com.rackspace.salus.acm.web.model.AgentInstallCreate;
-import com.rackspace.salus.acm.web.model.AgentInstallDTO;
 import com.rackspace.salus.resource_management.web.client.ResourceApi;
 import com.rackspace.salus.resource_management.web.model.ResourceDTO;
 import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
@@ -79,7 +78,7 @@ public class AgentInstallService {
     this.boundEventSender = boundEventSender;
   }
 
-  public AgentInstallDTO install(String tenantId, AgentInstallCreate in) {
+  public AgentInstall install(String tenantId, AgentInstallCreate in) {
     Assert.notNull(tenantId, "tenantId is required");
 
     log.debug("Creating install={} for tenant={}", in, tenantId);
@@ -105,7 +104,7 @@ public class AgentInstallService {
     bindInstallToResources(saved);
 
     log.info("Created agentInstall={}", saved);
-    return saved.toDTO();
+    return saved;
   }
 
   public void delete(String tenantId, UUID agentInstallId) {

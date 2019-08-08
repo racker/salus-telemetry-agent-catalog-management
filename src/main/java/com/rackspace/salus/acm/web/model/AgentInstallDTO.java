@@ -17,7 +17,9 @@
 package com.rackspace.salus.acm.web.model;
 
 import com.fasterxml.jackson.annotation.JsonView;
+import com.rackspace.salus.telemetry.entities.AgentInstall;
 import com.rackspace.salus.telemetry.model.View;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.UUID;
 import lombok.Data;
@@ -35,4 +37,13 @@ public class AgentInstallDTO {
 
   String createdTimestamp;
   String updatedTimestamp;
+
+  public AgentInstallDTO(AgentInstall agentInstall) {
+    this.id = agentInstall.getId();
+    this.agentRelease = new AgentReleaseDTO(agentInstall.getAgentRelease());
+    this.tenantId = agentInstall.getTenantId();
+    this.labelSelector = agentInstall.getLabelSelector();
+    this.createdTimestamp = DateTimeFormatter.ISO_INSTANT.format(agentInstall.getCreatedTimestamp());
+    this.updatedTimestamp = DateTimeFormatter.ISO_INSTANT.format(agentInstall.getUpdatedTimestamp());
+  }
 }

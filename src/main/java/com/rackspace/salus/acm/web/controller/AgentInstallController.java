@@ -17,9 +17,8 @@
 package com.rackspace.salus.acm.web.controller;
 
 import com.fasterxml.jackson.annotation.JsonView;
-import com.rackspace.salus.acm.entities.AgentInstall;
-import com.rackspace.salus.acm.repositories.AgentInstallRepository;
-import com.rackspace.salus.acm.repositories.BoundAgentInstallRepository;
+import com.rackspace.salus.telemetry.repositories.AgentInstallRepository;
+import com.rackspace.salus.telemetry.repositories.BoundAgentInstallRepository;
 import com.rackspace.salus.acm.services.AgentInstallService;
 import com.rackspace.salus.acm.web.client.AgentInstallApi;
 import com.rackspace.salus.acm.web.model.AgentInstallCreate;
@@ -78,10 +77,10 @@ public class AgentInstallController implements AgentInstallApi {
   public BoundAgentInstallDTO getBindingForResourceAndAgentType(
       @PathVariable String tenantId, @PathVariable String resourceId,
       @PathVariable AgentType agentType) {
-    return boundAgentInstallRepository.findAllByTenantResourceAgentType(tenantId, resourceId, agentType)
+    return new BoundAgentInstallDTO(
+        boundAgentInstallRepository.findAllByTenantResourceAgentType(tenantId, resourceId, agentType)
         .stream().findFirst()
-        .orElseThrow(() -> new NotFoundException("Could find find agent install for given resource and agent type"))
-        .toDTO();
+        .orElseThrow(() -> new NotFoundException("Could find find agent install for given resource and agent type")));
   }
 
   @GetMapping("/tenant/{tenantId}/agent-installs")
@@ -91,7 +90,7 @@ public class AgentInstallController implements AgentInstallApi {
                                                         Pageable pageable) {
     return PagedContent.fromPage(
         agentInstallRepository.findAllByTenantId(tenantId, pageable)
-            .map(AgentInstall::toDTO)
+            .map(AgentInstallDTO::new)
     );
   }
 
@@ -101,7 +100,7 @@ public class AgentInstallController implements AgentInstallApi {
   @ApiOperation(value = "Create a new agent installation")
   public AgentInstallDTO create(@PathVariable String tenantId,
                                 @RequestBody AgentInstallCreate in) {
-    return agentInstallService.install(tenantId, in);
+    return new AgentInstallDTO(agentInstallService.install(tenantId, in));
   }
 
   @DeleteMapping("/tenant/{tenantId}/agent-installs/{agentInstallId}")
