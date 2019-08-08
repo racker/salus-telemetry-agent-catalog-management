@@ -23,8 +23,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.UUID;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
 public class AgentInstallDTO {
   UUID id;
 
