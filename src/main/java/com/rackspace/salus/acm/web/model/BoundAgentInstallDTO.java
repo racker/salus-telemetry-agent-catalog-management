@@ -18,8 +18,10 @@ package com.rackspace.salus.acm.web.model;
 
 import com.rackspace.salus.telemetry.entities.BoundAgentInstall;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
 public class BoundAgentInstallDTO {
   String resourceId;
 
