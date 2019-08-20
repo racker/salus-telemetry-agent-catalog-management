@@ -24,4 +24,4 @@ management:
       influx:
         uri: ${salus.metrics.influx.uri:http://localhost:8086}
         db: salus
-        enabled: ${salus.metrics.influx.enabled:false}      
+        enabled: ${salus.metrics.influx.enabled:false}   
