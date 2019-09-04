@@ -17,6 +17,7 @@
 package com.rackspace.salus.acm.services;
 
 import com.github.zafarkhaja.semver.Version;
+import com.rackspace.salus.common.util.SpringResourceUtils;
 import com.rackspace.salus.telemetry.entities.AgentInstall;
 import com.rackspace.salus.telemetry.entities.AgentRelease;
 import com.rackspace.salus.telemetry.entities.BoundAgentInstall;
@@ -31,6 +32,7 @@ import com.rackspace.salus.telemetry.messaging.OperationType;
 import com.rackspace.salus.telemetry.messaging.ResourceEvent;
 import com.rackspace.salus.telemetry.model.AgentType;
 import com.rackspace.salus.telemetry.model.NotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -60,6 +62,7 @@ public class AgentInstallService {
   private final BoundAgentInstallRepository boundAgentInstallRepository;
   private final ResourceApi resourceApi;
   private final BoundEventSender boundEventSender;
+  private final String labelMatchQuery;
 
   @Autowired
   public AgentInstallService(JdbcTemplate jdbcTemplate,
@@ -68,7 +71,7 @@ public class AgentInstallService {
                              AgentInstallRepository agentInstallRepository,
                              BoundAgentInstallRepository boundAgentInstallRepository,
                              ResourceApi resourceApi,
-                             BoundEventSender boundEventSender) {
+                             BoundEventSender boundEventSender) throws IOException {
     this.jdbcTemplate = jdbcTemplate;
     this.em = entityManager;
     this.agentReleaseRepository = agentReleaseRepository;
@@ -76,6 +79,7 @@ public class AgentInstallService {
     this.boundAgentInstallRepository = boundAgentInstallRepository;
     this.resourceApi = resourceApi;
     this.boundEventSender = boundEventSender;
+    labelMatchQuery = SpringResourceUtils.readContent("sql-queries/agent_installs_label_matching_query.sql");
   }
 
   public AgentInstall install(String tenantId, AgentInstallCreate in) {
@@ -170,12 +174,7 @@ public class AgentInstallService {
 
     MapSqlParameterSource paramSource = new MapSqlParameterSource();
     paramSource.addValue("tenantId", tenantId);
-    StringBuilder builder = new StringBuilder(
-        "SELECT agent_installs.id FROM agent_installs JOIN agent_install_label_selectors AS ml WHERE agent_installs.id = ml.agent_install_id AND agent_installs.id IN ");
-    builder.append(
-        "(SELECT agent_install_id from agent_install_label_selectors WHERE agent_installs.id IN (SELECT id FROM agent_installs WHERE tenant_id = :tenantId) AND ");
-    builder.append(
-        "agent_installs.id IN (SELECT search_labels.agent_install_id FROM (SELECT agent_install_id, COUNT(*) AS count FROM agent_install_label_selectors GROUP BY agent_install_id) AS total_labels JOIN (SELECT agent_install_id, COUNT(*) AS count FROM agent_install_label_selectors WHERE ");
+    StringBuilder builder = new StringBuilder();
     int i = 0;
     for (Map.Entry<String, String> entry : labels.entrySet()) {
       if (i > 0) {
@@ -188,16 +187,13 @@ public class AgentInstallService {
       paramSource.addValue("labelKey" + i, entry.getKey());
       i++;
     }
-    builder.append(
-        " GROUP BY agent_install_id) AS search_labels WHERE total_labels.agent_install_id = search_labels.agent_install_id AND search_labels.count >= total_labels.count GROUP BY search_labels.agent_install_id)");
 
-    builder.append(") ORDER BY agent_installs.id");
     paramSource.addValue("i", i);
 
     @SuppressWarnings("ConstantConditions")
     NamedParameterJdbcTemplate namedParameterTemplate = new NamedParameterJdbcTemplate(
         jdbcTemplate.getDataSource());
-    final List<UUID> monitorIds = namedParameterTemplate.query(builder.toString(), paramSource,
+    final List<UUID> monitorIds = namedParameterTemplate.query(String.format(labelMatchQuery, builder.toString()), paramSource,
         (resultSet, rowIndex) -> UUID.fromString(resultSet.getString(1))
     );
 
