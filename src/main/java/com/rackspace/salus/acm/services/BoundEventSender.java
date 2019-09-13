@@ -64,9 +64,7 @@ public class BoundEventSender {
       final String key = KafkaMessageKeyBuilder.buildMessageKey(event);
       try {
         kafkaTemplate.send(topic, key, event).get();
-      } catch (InterruptedException e) {
-        throw new RuntimeKafkaException(e);
-      } catch (ExecutionException e) {
+      } catch (InterruptedException|ExecutionException e) {
         throw new RuntimeKafkaException(e);
       }
     }
