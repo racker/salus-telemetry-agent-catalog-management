@@ -16,8 +16,12 @@
 
 package com.rackspace.salus.acm.services;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyObject;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 import com.rackspace.salus.common.messaging.KafkaTopicProperties;
 import com.rackspace.salus.telemetry.messaging.AgentInstallChangeEvent;
@@ -26,6 +30,7 @@ import com.rackspace.salus.telemetry.model.AgentType;
 import java.util.Arrays;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -33,7 +38,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.SendResult;
+import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.util.concurrent.ListenableFuture;
+import org.springframework.util.concurrent.ListenableFutureTask;
+import org.springframework.util.concurrent.SettableListenableFuture;
 
 @SuppressWarnings("unchecked")
 @RunWith(SpringRunner.class)
@@ -61,6 +71,11 @@ public class BoundEventSenderTest {
 
   @Test
   public void testSending() {
+
+    SettableListenableFuture<SendResult<String, Object>> future = new SettableListenableFuture();
+    future.set(null);
+    when(kafkaTemplate.send(anyString(), anyString(), any())).thenReturn(future);
+
     boundEventSender.sendTo(OperationType.UPSERT, AgentType.TELEGRAF, Arrays.asList(
         new TenantResource("t-1", "r-1"),
         new TenantResource("t-1", "r-2")
