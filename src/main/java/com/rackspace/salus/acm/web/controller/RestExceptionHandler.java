@@ -17,7 +17,6 @@
 package com.rackspace.salus.acm.web.controller;
 
 import com.rackspace.salus.common.errors.ResponseMessages;
-import com.rackspace.salus.common.errors.RuntimeKafkaException;
 import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
 import com.rackspace.salus.telemetry.model.NotFoundException;
 import javax.servlet.http.HttpServletRequest;
@@ -39,12 +38,6 @@ public class RestExceptionHandler extends
   @Autowired
   public RestExceptionHandler(ErrorAttributes errorAttributes) {
     super(errorAttributes);
-  }
-
-  @ExceptionHandler({IllegalArgumentException.class})
-  public ResponseEntity<?> handleBadRequest(
-      HttpServletRequest request) {
-    return respondWith(request, HttpStatus.BAD_REQUEST);
   }
 
   @ExceptionHandler({NotFoundException.class})
@@ -71,9 +64,4 @@ public class RestExceptionHandler extends
     return respondWith(request, HttpStatus.SERVICE_UNAVAILABLE, ResponseMessages.jdbcExceptionMessage);
   }
 
-  @ExceptionHandler({RuntimeKafkaException.class})
-  public ResponseEntity<?> handleKafkaExceptions(
-      HttpServletRequest request) {
-    return respondWith(request, HttpStatus.SERVICE_UNAVAILABLE, ResponseMessages.kafkaExceptionMessage);
-  }
 }
