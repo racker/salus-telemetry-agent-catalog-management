@@ -23,6 +23,7 @@ import static org.assertj.core.api.Assertions.fail;
 
 import com.rackspace.salus.telemetry.entities.AgentInstall;
 import com.rackspace.salus.telemetry.entities.AgentRelease;
+import com.rackspace.salus.telemetry.model.LabelSelectorMethod;
 import com.rackspace.salus.telemetry.repositories.AgentInstallRepository;
 import com.rackspace.salus.telemetry.repositories.AgentReleaseRepository;
 import com.rackspace.salus.acm.web.model.AgentReleaseCreate;
@@ -118,7 +119,7 @@ public class AgentReleaseServiceTest {
   public void testDelete_stillReferenced() {
     final AgentRelease release = saveRelease("1.11.0", TELEGRAF, singletonMap("os", "linux"));
 
-    saveInstall(release, "t-1", "os", "linux");
+    saveInstall(release, "t-1", LabelSelectorMethod.AND, "os", "linux");
 
     try {
       agentReleaseService.delete(release.getId());
@@ -145,7 +146,7 @@ public class AgentReleaseServiceTest {
     agentReleaseRepository.deleteAll();
   }
 
-  private AgentInstall saveInstall(AgentRelease release, String tenantId,
+  private AgentInstall saveInstall(AgentRelease release, String tenantId, LabelSelectorMethod labelSelectorMethod,
                                    String... labelPairs) {
     final Map<String, String> labelSelector = new HashMap<>();
     for (int i = 2; i <= labelPairs.length; i += 2) {
@@ -157,6 +158,7 @@ public class AgentReleaseServiceTest {
             .setAgentRelease(release)
             .setTenantId(tenantId)
             .setLabelSelector(labelSelector)
+            .setLabelSelectorMethod(LabelSelectorMethod.AND)
     );
   }
 

@@ -21,6 +21,7 @@ import com.rackspace.salus.common.util.SpringResourceUtils;
 import com.rackspace.salus.telemetry.entities.AgentInstall;
 import com.rackspace.salus.telemetry.entities.AgentRelease;
 import com.rackspace.salus.telemetry.entities.BoundAgentInstall;
+import com.rackspace.salus.telemetry.model.LabelSelectorMethod;
 import com.rackspace.salus.telemetry.repositories.AgentInstallRepository;
 import com.rackspace.salus.telemetry.repositories.AgentReleaseRepository;
 import com.rackspace.salus.telemetry.repositories.BoundAgentInstallRepository;
@@ -101,7 +102,8 @@ public class AgentInstallService {
     final AgentInstall agentInstall = new AgentInstall()
         .setAgentRelease(agentRelease)
         .setLabelSelector(in.getLabelSelector())
-        .setTenantId(tenantId);
+        .setTenantId(tenantId)
+        .setLabelSelectorMethod(in.getLabelSelectorMethod());
 
     final AgentInstall saved = agentInstallRepository.save(agentInstall);
 
@@ -208,7 +210,7 @@ public class AgentInstallService {
 
   private void bindInstallToResources(AgentInstall agentInstall) {
     final List<ResourceDTO> resources = resourceApi
-        .getResourcesWithLabels(agentInstall.getTenantId(), agentInstall.getLabelSelector());
+        .getResourcesWithLabels(agentInstall.getTenantId(), agentInstall.getLabelSelector(), agentInstall.getLabelSelectorMethod());
 
     log.debug("Found resources={} matching selector of agentInstall={}", resources, agentInstall);
 

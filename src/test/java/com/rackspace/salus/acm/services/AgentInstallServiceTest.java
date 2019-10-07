@@ -30,6 +30,7 @@ import static org.mockito.Mockito.when;
 import com.rackspace.salus.telemetry.entities.AgentInstall;
 import com.rackspace.salus.telemetry.entities.AgentRelease;
 import com.rackspace.salus.telemetry.entities.BoundAgentInstall;
+import com.rackspace.salus.telemetry.model.LabelSelectorMethod;
 import com.rackspace.salus.telemetry.repositories.AgentInstallRepository;
 import com.rackspace.salus.telemetry.repositories.AgentReleaseRepository;
 import com.rackspace.salus.telemetry.repositories.BoundAgentInstallRepository;
@@ -121,17 +122,17 @@ public class AgentInstallServiceTest {
     final AgentRelease release4 = saveRelease("4.0.0", TELEGRAF);
 
     final AgentInstall install1 = saveInstall(
-        release1, "t-1", "os", "linux", "cluster", "prod");
+        release1, "t-1", LabelSelectorMethod.AND, "os", "linux", "cluster", "prod");
     final AgentInstall install2 = saveInstall(
-        release2, "t-1", "os", "linux", "cluster", "prod");
+        release2, "t-1", LabelSelectorMethod.AND, "os", "linux", "cluster", "prod");
     final AgentInstall install3 = saveInstall(
-        release3, "t-1", "os", "linux", "cluster", "prod");
+        release3, "t-1", LabelSelectorMethod.AND, "os", "linux", "cluster", "prod");
     // different cluster
     final AgentInstall install4 = saveInstall(
-        release4, "t-1", "os", "linux", "cluster", "dev");
+        release4, "t-1", LabelSelectorMethod.AND, "os", "linux", "cluster", "dev");
     // different tenant
     final AgentInstall install5 = saveInstall(
-        release1, "t-2", "os", "linux", "cluster", "prod");
+        release1, "t-2", LabelSelectorMethod.AND, "os", "linux", "cluster", "prod");
 
     {
       // typical case
@@ -250,7 +251,7 @@ public class AgentInstallServiceTest {
   public void testInstall_noPrior_multiResource() {
     final AgentRelease release1 = saveRelease("1.0.0", TELEGRAF);
 
-    when(resourceApi.getResourcesWithLabels(eq("t-1"), any()))
+    when(resourceApi.getResourcesWithLabels(eq("t-1"), any(), eq(LabelSelectorMethod.AND)))
         .thenReturn(Arrays.asList(
             new ResourceDTO().setTenantId("t-1").setResourceId("r-1"),
             new ResourceDTO().setTenantId("t-1").setResourceId("r-2")
@@ -264,6 +265,7 @@ public class AgentInstallServiceTest {
         new AgentInstallCreate()
             .setAgentReleaseId(release1.getId())
             .setLabelSelector(labelSelector)
+            .setLabelSelectorMethod(LabelSelectorMethod.AND)
     );
 
     // VERIFY
@@ -282,7 +284,7 @@ public class AgentInstallServiceTest {
     bindings.forEach(binding -> boundResourceIds.add(binding.getResourceId()));
     assertThat(boundResourceIds).containsExactlyInAnyOrder("r-1", "r-2");
 
-    verify(resourceApi).getResourcesWithLabels("t-1", labelSelector);
+    verify(resourceApi).getResourcesWithLabels("t-1", labelSelector, LabelSelectorMethod.AND);
 
     verify(boundEventSender)
         .sendTo(eq(OperationType.UPSERT), eq(TELEGRAF), tenantResourcesArg.capture());
@@ -299,7 +301,7 @@ public class AgentInstallServiceTest {
   public void testInstall_noPrior_noneSelected() {
     final AgentRelease release1 = saveRelease("1.0.0", TELEGRAF);
 
-    when(resourceApi.getResourcesWithLabels(eq("t-1"), any()))
+    when(resourceApi.getResourcesWithLabels(eq("t-1"), any(), eq(LabelSelectorMethod.AND)))
         .thenReturn(Collections.emptyList());
 
     // EXECUTE
@@ -310,6 +312,7 @@ public class AgentInstallServiceTest {
         new AgentInstallCreate()
             .setAgentReleaseId(release1.getId())
             .setLabelSelector(labelSelector)
+            .setLabelSelectorMethod(LabelSelectorMethod.AND)
     );
 
     // VERIFY
@@ -326,7 +329,7 @@ public class AgentInstallServiceTest {
     final Iterable<BoundAgentInstall> bindings = boundAgentInstallRepository.findAll();
     assertThat(bindings).isEmpty();
 
-    verify(resourceApi).getResourcesWithLabels("t-1", labelSelector);
+    verify(resourceApi).getResourcesWithLabels("t-1", labelSelector, LabelSelectorMethod.AND);
 
     verifyNoMoreInteractions(boundEventSender, resourceApi);
   }
@@ -336,12 +339,12 @@ public class AgentInstallServiceTest {
     final AgentRelease release1 = saveRelease("1.0.0", TELEGRAF);
     final AgentRelease release2 = saveRelease("2.0.0", TELEGRAF);
 
-    when(resourceApi.getResourcesWithLabels(eq("t-1"), any()))
+    when(resourceApi.getResourcesWithLabels(eq("t-1"), any(), eq(LabelSelectorMethod.AND)))
         .thenReturn(Collections.singletonList(
             new ResourceDTO().setTenantId("t-1").setResourceId("r-1")
         ));
 
-    final AgentInstall priorInstall = saveInstall(release1, "t-1", "os", "linux");
+    final AgentInstall priorInstall = saveInstall(release1, "t-1", LabelSelectorMethod.AND, "os", "linux");
 
     saveBinding(priorInstall, "r-1");
 
@@ -353,6 +356,7 @@ public class AgentInstallServiceTest {
         new AgentInstallCreate()
             .setAgentReleaseId(release2.getId())
             .setLabelSelector(labelSelector)
+            .setLabelSelectorMethod(LabelSelectorMethod.AND)
     );
 
     // VERIFY
@@ -373,7 +377,7 @@ public class AgentInstallServiceTest {
     assertThat(savedBinding.getAgentInstall().getId()).isEqualTo(agentInstall.getId());
     assertThat(savedBinding.getAgentInstall().getAgentRelease()).isEqualTo(release2);
 
-    verify(resourceApi).getResourcesWithLabels("t-1", labelSelector);
+    verify(resourceApi).getResourcesWithLabels("t-1", labelSelector, LabelSelectorMethod.AND);
 
     verify(boundEventSender)
         .sendTo(eq(OperationType.UPSERT), eq(TELEGRAF), tenantResourcesArg.capture());
@@ -390,13 +394,13 @@ public class AgentInstallServiceTest {
     final AgentRelease release1 = saveRelease("1.0.0", TELEGRAF);
     final AgentRelease release2 = saveRelease("2.0.0", TELEGRAF);
 
-    when(resourceApi.getResourcesWithLabels(eq("t-1"), any()))
+    when(resourceApi.getResourcesWithLabels(eq("t-1"), any(), eq(LabelSelectorMethod.AND)))
         .thenReturn(Collections.singletonList(
             new ResourceDTO().setTenantId("t-1").setResourceId("r-1")
         ));
 
     // prior install is release 2.0.0
-    final AgentInstall priorInstall = saveInstall(release2, "t-1", "os", "linux");
+    final AgentInstall priorInstall = saveInstall(release2, "t-1", LabelSelectorMethod.AND, "os", "linux");
 
     final BoundAgentInstall binding = saveBinding(priorInstall, "r-1");
 
@@ -409,6 +413,7 @@ public class AgentInstallServiceTest {
             // but user requested 1.0.0
             .setAgentReleaseId(release1.getId())
             .setLabelSelector(labelSelector)
+            .setLabelSelectorMethod(LabelSelectorMethod.AND)
     );
 
     // VERIFY
@@ -430,7 +435,7 @@ public class AgentInstallServiceTest {
     assertThat(savedBinding.getAgentInstall().getId()).isEqualTo(priorInstall.getId());
     assertThat(savedBinding.getAgentInstall().getAgentRelease()).isEqualTo(release2);
 
-    verify(resourceApi).getResourcesWithLabels("t-1", labelSelector);
+    verify(resourceApi).getResourcesWithLabels("t-1", labelSelector, LabelSelectorMethod.AND);
 
     // no bound events sent, since prior install still applies
 
@@ -443,13 +448,13 @@ public class AgentInstallServiceTest {
     final AgentRelease release2 = saveRelease("2.0.0", TELEGRAF);
     final AgentRelease release3 = saveRelease("3.0.0", TELEGRAF);
 
-    when(resourceApi.getResourcesWithLabels(eq("t-1"), any()))
+    when(resourceApi.getResourcesWithLabels(eq("t-1"), any(), eq(LabelSelectorMethod.AND)))
         .thenReturn(Collections.singletonList(
             new ResourceDTO().setTenantId("t-1").setResourceId("r-1")
         ));
 
-    final AgentInstall install2 = saveInstall(release2, "t-1", "os", "linux");
-    final AgentInstall install3 = saveInstall(release3, "t-1", "os", "linux");
+    final AgentInstall install2 = saveInstall(release2, "t-1", LabelSelectorMethod.AND, "os", "linux");
+    final AgentInstall install3 = saveInstall(release3, "t-1", LabelSelectorMethod.AND, "os", "linux");
 
     // simulate multiple bindings to resource...which really shouldn't ever happen, but
     // service can cleanup this case
@@ -465,6 +470,7 @@ public class AgentInstallServiceTest {
             // but user requested 1.0.0
             .setAgentReleaseId(release1.getId())
             .setLabelSelector(labelSelector)
+            .setLabelSelectorMethod(LabelSelectorMethod.AND)
     );
 
     // VERIFY
@@ -488,7 +494,7 @@ public class AgentInstallServiceTest {
     assertThat(savedBinding.getAgentInstall().getId()).isEqualTo(install3.getId());
     assertThat(savedBinding.getAgentInstall().getAgentRelease()).isEqualTo(release3);
 
-    verify(resourceApi).getResourcesWithLabels("t-1", labelSelector);
+    verify(resourceApi).getResourcesWithLabels("t-1", labelSelector, LabelSelectorMethod.AND);
 
     // no bound events sent, since prior install still applies
 
@@ -499,12 +505,12 @@ public class AgentInstallServiceTest {
   public void testInstall_alreadyExists() {
     final AgentRelease release1 = saveRelease("1.0.0", TELEGRAF);
 
-    when(resourceApi.getResourcesWithLabels(eq("t-1"), any()))
+    when(resourceApi.getResourcesWithLabels(eq("t-1"), any(), eq(LabelSelectorMethod.AND)))
         .thenReturn(Collections.singletonList(
             new ResourceDTO().setTenantId("t-1").setResourceId("r-1")
         ));
 
-    final AgentInstall install1 = saveInstall(release1, "t-1", "os", "linux");
+    final AgentInstall install1 = saveInstall(release1, "t-1", LabelSelectorMethod.AND, "os", "linux");
 
     // EXECUTE
 
@@ -547,7 +553,7 @@ public class AgentInstallServiceTest {
   public void testDelete_wrongTenant() {
     final AgentRelease release = saveRelease("1.0.0", TELEGRAF);
 
-    final AgentInstall install = saveInstall(release, "t-other", "os", "linux");
+    final AgentInstall install = saveInstall(release, "t-other", LabelSelectorMethod.AND, "os", "linux");
 
     // EXECUTE
 
@@ -567,7 +573,7 @@ public class AgentInstallServiceTest {
   public void testDelete_noBindings() {
     final AgentRelease release = saveRelease("1.0.0", TELEGRAF);
 
-    final AgentInstall install = saveInstall(release, "t-1", "os", "linux");
+    final AgentInstall install = saveInstall(release, "t-1", LabelSelectorMethod.AND, "os", "linux");
 
     // EXECUTE
     agentInstallService.delete("t-1", install.getId());
@@ -587,7 +593,7 @@ public class AgentInstallServiceTest {
   public void testDelete_withBindings() {
     final AgentRelease release = saveRelease("1.0.0", TELEGRAF);
 
-    final AgentInstall install = saveInstall(release, "t-1", "os", "linux");
+    final AgentInstall install = saveInstall(release, "t-1", LabelSelectorMethod.AND, "os", "linux");
 
     saveBinding(install, "r-1");
     saveBinding(install, "r-2");
@@ -620,9 +626,9 @@ public class AgentInstallServiceTest {
     final AgentRelease releaseT2 = saveRelease("2.0.0", TELEGRAF);
     final AgentRelease releaseF1 = saveRelease("1.0.0", FILEBEAT);
 
-    final AgentInstall installT1 = saveInstall(releaseT1, "t-1", "os", "1");
-    final AgentInstall installT2 = saveInstall(releaseT2, "t-1", "os", "2");
-    final AgentInstall installF1 = saveInstall(releaseF1, "t-1", "os", "3");
+    final AgentInstall installT1 = saveInstall(releaseT1, "t-1", LabelSelectorMethod.AND, "os", "1");
+    final AgentInstall installT2 = saveInstall(releaseT2, "t-1", LabelSelectorMethod.AND, "os", "2");
+    final AgentInstall installF1 = saveInstall(releaseF1, "t-1", LabelSelectorMethod.AND, "os", "3");
 
     saveBinding(installT1, "r-1");
     saveBinding(installT2, "r-1");
@@ -711,7 +717,7 @@ public class AgentInstallServiceTest {
 
     final AgentRelease release = saveRelease("1.0.0", TELEGRAF);
 
-    final AgentInstall install = saveInstall(release, "t-1", "os", "linux");
+    final AgentInstall install = saveInstall(release, "t-1", LabelSelectorMethod.AND, "os", "linux");
 
     // EXECUTE
     agentInstallService.handleResourceEvent(
@@ -756,7 +762,7 @@ public class AgentInstallServiceTest {
 
     final AgentRelease release = saveRelease("1.0.0", TELEGRAF);
 
-    final AgentInstall install = saveInstall(release, "t-1", "os", "linux");
+    final AgentInstall install = saveInstall(release, "t-1", LabelSelectorMethod.AND, "os", "linux");
 
     // EXECUTE
     agentInstallService.handleResourceEvent(
@@ -804,7 +810,7 @@ public class AgentInstallServiceTest {
 
     final AgentRelease release = saveRelease("1.0.0", TELEGRAF);
 
-    final AgentInstall install = saveInstall(release, "t-1", "os", "linux");
+    final AgentInstall install = saveInstall(release, "t-1", LabelSelectorMethod.AND, "os", "linux");
 
     saveBinding(install, "r-1");
 
@@ -857,8 +863,8 @@ public class AgentInstallServiceTest {
     final AgentRelease release2 = saveRelease("2.0.0", TELEGRAF);
 
     // declare conflicting installs to ensure it picks the newer, install2
-    final AgentInstall install1 = saveInstall(release1, "t-1", "os", "linux");
-    final AgentInstall install2 = saveInstall(release2, "t-1", "os", "linux");
+    final AgentInstall install1 = saveInstall(release1, "t-1", LabelSelectorMethod.AND, "os", "linux");
+    final AgentInstall install2 = saveInstall(release2, "t-1", LabelSelectorMethod.AND, "os", "linux");
 
     // EXECUTE
     agentInstallService.handleResourceEvent(
@@ -907,8 +913,8 @@ public class AgentInstallServiceTest {
     final AgentRelease release2 = saveRelease("2.0.0", TELEGRAF);
 
     // declare conflicting installs to ensure it picks the newer, install2
-    final AgentInstall install1 = saveInstall(release1, "t-1", "os", "linux");
-    final AgentInstall install2 = saveInstall(release2, "t-1", "os", "linux");
+    final AgentInstall install1 = saveInstall(release1, "t-1", LabelSelectorMethod.AND, "os", "linux");
+    final AgentInstall install2 = saveInstall(release2, "t-1", LabelSelectorMethod.AND, "os", "linux");
 
     // simulate extraneous binding
     saveBinding(install1, "r-1");
@@ -955,7 +961,7 @@ public class AgentInstallServiceTest {
 
     final AgentRelease release = saveRelease("1.0.0", TELEGRAF);
 
-    final AgentInstall install = saveInstall(release, "t-1", "os", "linux");
+    final AgentInstall install = saveInstall(release, "t-1", LabelSelectorMethod.AND, "os", "linux");
 
     saveBinding(install, "r-1");
 
@@ -995,7 +1001,7 @@ public class AgentInstallServiceTest {
 
     final AgentRelease release = saveRelease("1.0.0", TELEGRAF);
 
-    final AgentInstall install = saveInstall(release, "t-1", "os", "linux");
+    final AgentInstall install = saveInstall(release, "t-1", LabelSelectorMethod.AND, "os", "linux");
 
     saveBinding(install, "r-1");
 
@@ -1045,7 +1051,7 @@ public class AgentInstallServiceTest {
 
     final AgentRelease release = saveRelease("1.0.0", TELEGRAF);
 
-    final AgentInstall install = saveInstall(release, "t-1", "os", "linux");
+    final AgentInstall install = saveInstall(release, "t-1", LabelSelectorMethod.AND, "os", "linux");
 
     saveBinding(install, "r-1");
 
@@ -1089,7 +1095,7 @@ public class AgentInstallServiceTest {
 
     final AgentRelease release = saveRelease("1.0.0", TELEGRAF);
 
-    final AgentInstall install = saveInstall(release, "t-1", "os", "linux");
+    final AgentInstall install = saveInstall(release, "t-1", LabelSelectorMethod.AND, "os", "linux");
 
     // EXECUTE
     agentInstallService.handleResourceEvent(
@@ -1115,7 +1121,7 @@ public class AgentInstallServiceTest {
   public void testHandleResourceEvent_deleted() {
     final AgentRelease release = saveRelease("1.0.0", TELEGRAF);
 
-    final AgentInstall install = saveInstall(release, "t-1", "os", "linux");
+    final AgentInstall install = saveInstall(release, "t-1", LabelSelectorMethod.AND, "os", "linux");
 
     saveBinding(install, "r-1");
 
@@ -1144,7 +1150,7 @@ public class AgentInstallServiceTest {
   public void testHandleResourceEvent_reattach() {
     final AgentRelease release = saveRelease("1.0.0", TELEGRAF);
 
-    final AgentInstall install = saveInstall(release, "t-1", "os", "linux");
+    final AgentInstall install = saveInstall(release, "t-1", LabelSelectorMethod.AND, "os", "linux");
 
     saveBinding(install, "r-1");
 
@@ -1179,7 +1185,7 @@ public class AgentInstallServiceTest {
     );
   }
 
-  private AgentInstall saveInstall(AgentRelease release, String tenantId,
+  private AgentInstall saveInstall(AgentRelease release, String tenantId, LabelSelectorMethod labelSelectorMethod,
                                    String... labelPairs) {
     final Map<String, String> labelSelector = new HashMap<>();
     for (int i = 2; i <= labelPairs.length; i += 2) {
@@ -1191,6 +1197,7 @@ public class AgentInstallServiceTest {
             .setAgentRelease(release)
             .setTenantId(tenantId)
             .setLabelSelector(labelSelector)
+            .setLabelSelectorMethod(labelSelectorMethod)
     );
   }
 
