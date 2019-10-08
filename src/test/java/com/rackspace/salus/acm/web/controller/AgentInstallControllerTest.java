@@ -31,6 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.rackspace.salus.telemetry.entities.AgentInstall;
 import com.rackspace.salus.telemetry.entities.AgentRelease;
 import com.rackspace.salus.telemetry.entities.BoundAgentInstall;
+import com.rackspace.salus.telemetry.model.LabelSelectorMethod;
 import com.rackspace.salus.telemetry.repositories.AgentInstallRepository;
 import com.rackspace.salus.telemetry.repositories.BoundAgentInstallRepository;
 import com.rackspace.salus.acm.services.AgentInstallService;
@@ -147,6 +148,7 @@ public class AgentInstallControllerTest {
     verify(agentInstallService).install("t-1", new AgentInstallCreate()
         .setAgentReleaseId(release.getId())
         .setLabelSelector(Collections.singletonMap("os", "linux"))
+        .setLabelSelectorMethod(LabelSelectorMethod.AND)
     );
 
     verifyNoMoreInteractions(
@@ -188,6 +190,7 @@ public class AgentInstallControllerTest {
     return new AgentInstall()
         .setId(UUID.fromString("00000000-0000-0000-0002-000000000000"))
         .setLabelSelector(singletonMap("os", "linux"))
+        .setLabelSelectorMethod(LabelSelectorMethod.AND)
         .setTenantId("t-1")
         .setCreatedTimestamp(Instant.ofEpochSecond(100002))
         .setUpdatedTimestamp(Instant.ofEpochSecond(100003))

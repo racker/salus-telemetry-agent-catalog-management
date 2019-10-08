@@ -133,7 +133,15 @@ public class AgentInstallServiceTest {
     // different tenant
     final AgentInstall install5 = saveInstall(
         release1, "t-2", LabelSelectorMethod.AND, "os", "linux", "cluster", "prod");
-
+    // different LabelSelectorMethod - same labels
+    final AgentInstall install6 = saveInstall(
+        release1, "t-1", LabelSelectorMethod.OR, "os", "windows", "cluster", "prod");
+    // different labelSelectorMethod - no matching labels
+    final AgentInstall install7 = saveInstall(
+        release1, "t-1", LabelSelectorMethod.OR, "os", "windows", "cluster", "staging");
+    // different labelSelectorMethod - only one label
+    final AgentInstall install8 = saveInstall(
+        release1, "t-1", LabelSelectorMethod.OR, "os", "linux");
     {
       // typical case
       Map<String, String> resourceLabels = new HashMap<>();
@@ -148,7 +156,7 @@ public class AgentInstallServiceTest {
           .map(AgentInstall::getId)
           .collect(Collectors.toList());
       assertThat(installIds).containsExactlyInAnyOrder(
-          install1.getId(), install2.getId(), install3.getId()
+          install1.getId(), install2.getId(), install3.getId(), install6.getId(), install8.getId()
       );
     }
 
@@ -184,7 +192,7 @@ public class AgentInstallServiceTest {
           .map(AgentInstall::getId)
           .collect(Collectors.toList());
       assertThat(installIds).containsExactlyInAnyOrder(
-          install4.getId()
+          install4.getId(), install8.getId()
       );
     }
 
@@ -201,24 +209,7 @@ public class AgentInstallServiceTest {
           .map(AgentInstall::getId)
           .collect(Collectors.toList());
       assertThat(installIds).containsExactlyInAnyOrder(
-          install1.getId(), install2.getId(), install3.getId()
-      );
-    }
-
-    {
-      // equal label count
-      Map<String, String> resourceLabels = new HashMap<>();
-      resourceLabels.put("os", "linux");
-      resourceLabels.put("cluster", "prod");
-
-      final List<AgentInstall> matches = agentInstallService
-          .getInstallsFromLabels("t-1", resourceLabels);
-
-      final List<UUID> installIds = matches.stream()
-          .map(AgentInstall::getId)
-          .collect(Collectors.toList());
-      assertThat(installIds).containsExactlyInAnyOrder(
-          install1.getId(), install2.getId(), install3.getId()
+          install1.getId(), install2.getId(), install3.getId(), install6.getId(), install8.getId()
       );
     }
 
@@ -243,7 +234,12 @@ public class AgentInstallServiceTest {
       final List<AgentInstall> matches = agentInstallService
           .getInstallsFromLabels("t-1", resourceLabels);
 
-      assertThat(matches).isEmpty();
+      final List<UUID> installIds = matches.stream()
+          .map(AgentInstall::getId)
+          .collect(Collectors.toList());
+      assertThat(installIds).containsExactlyInAnyOrder(
+          install8.getId()
+      );
     }
   }
 

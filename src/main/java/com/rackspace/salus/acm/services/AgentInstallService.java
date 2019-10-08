@@ -64,6 +64,7 @@ public class AgentInstallService {
   private final ResourceApi resourceApi;
   private final BoundEventSender boundEventSender;
   private final String labelMatchQuery;
+  private final String labelMatchORQuery;
 
   @Autowired
   public AgentInstallService(JdbcTemplate jdbcTemplate,
@@ -81,6 +82,7 @@ public class AgentInstallService {
     this.resourceApi = resourceApi;
     this.boundEventSender = boundEventSender;
     labelMatchQuery = SpringResourceUtils.readContent("sql-queries/agent_installs_label_matching_query.sql");
+    labelMatchORQuery = SpringResourceUtils.readContent("sql-queries/agent_installs_label_matching_OR_query.sql");
   }
 
   public AgentInstall install(String tenantId, AgentInstallCreate in) {
@@ -198,6 +200,14 @@ public class AgentInstallService {
     final List<UUID> monitorIds = namedParameterTemplate.query(String.format(labelMatchQuery, builder.toString()), paramSource,
         (resultSet, rowIndex) -> UUID.fromString(resultSet.getString(1))
     );
+
+    final List<UUID> monitorOrIds = namedParameterTemplate.query(String.format(labelMatchORQuery, builder.toString()), paramSource,
+        (resultSet, rowIndex) -> UUID.fromString(resultSet.getString(1))
+    );
+
+    monitorIds.addAll(monitorOrIds);
+
+    //combine the lists of UUID's here
 
     // use JPA to retrieve and resolve the entities and then convert Iterable result to list
     final ArrayList<AgentInstall> results = new ArrayList<>();

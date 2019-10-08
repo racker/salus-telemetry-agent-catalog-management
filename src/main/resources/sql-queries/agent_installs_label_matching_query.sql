@@ -4,6 +4,7 @@ FROM
    agent_installs JOIN agent_install_label_selectors AS ail
 WHERE
    agent_installs.id = ail.agent_install_id
+   AND agent_installs.label_selector_method = 'AND'
    AND agent_installs.id IN
    (
       SELECT
