@@ -150,7 +150,7 @@ public class AgentInstallServiceTest {
       resourceLabels.put("cluster", "prod");
 
       final List<AgentInstall> matches = agentInstallService
-          .getInstallsFromLabels("t-1", resourceLabels);
+          .getInstallsFromResourceLabels("t-1", resourceLabels);
 
       final List<UUID> installIds = matches.stream()
           .map(AgentInstall::getId)
@@ -168,7 +168,7 @@ public class AgentInstallServiceTest {
       resourceLabels.put("cluster", "prod");
 
       final List<AgentInstall> matches = agentInstallService
-          .getInstallsFromLabels("t-2", resourceLabels);
+          .getInstallsFromResourceLabels("t-2", resourceLabels);
 
       final List<UUID> installIds = matches.stream()
           .map(AgentInstall::getId)
@@ -186,7 +186,7 @@ public class AgentInstallServiceTest {
       resourceLabels.put("cluster", "dev");
 
       final List<AgentInstall> matches = agentInstallService
-          .getInstallsFromLabels("t-1", resourceLabels);
+          .getInstallsFromResourceLabels("t-1", resourceLabels);
 
       final List<UUID> installIds = matches.stream()
           .map(AgentInstall::getId)
@@ -203,7 +203,7 @@ public class AgentInstallServiceTest {
       resourceLabels.put("cluster", "prod");
 
       final List<AgentInstall> matches = agentInstallService
-          .getInstallsFromLabels("t-1", resourceLabels);
+          .getInstallsFromResourceLabels("t-1", resourceLabels);
 
       final List<UUID> installIds = matches.stream()
           .map(AgentInstall::getId)
@@ -221,7 +221,7 @@ public class AgentInstallServiceTest {
       resourceLabels.put("cluster", "prod");
 
       final List<AgentInstall> matches = agentInstallService
-          .getInstallsFromLabels("t-other", resourceLabels);
+          .getInstallsFromResourceLabels("t-other", resourceLabels);
 
       assertThat(matches).isEmpty();
     }
@@ -232,7 +232,7 @@ public class AgentInstallServiceTest {
       resourceLabels.put("os", "linux");
 
       final List<AgentInstall> matches = agentInstallService
-          .getInstallsFromLabels("t-1", resourceLabels);
+          .getInstallsFromResourceLabels("t-1", resourceLabels);
 
       final List<UUID> installIds = matches.stream()
           .map(AgentInstall::getId)

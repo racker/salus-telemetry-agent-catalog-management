@@ -21,7 +21,6 @@ import com.rackspace.salus.common.util.SpringResourceUtils;
 import com.rackspace.salus.telemetry.entities.AgentInstall;
 import com.rackspace.salus.telemetry.entities.AgentRelease;
 import com.rackspace.salus.telemetry.entities.BoundAgentInstall;
-import com.rackspace.salus.telemetry.model.LabelSelectorMethod;
 import com.rackspace.salus.telemetry.repositories.AgentInstallRepository;
 import com.rackspace.salus.telemetry.repositories.AgentReleaseRepository;
 import com.rackspace.salus.telemetry.repositories.BoundAgentInstallRepository;
@@ -170,9 +169,9 @@ public class AgentInstallService {
     }
   }
 
-  List<AgentInstall> getInstallsFromLabels(String tenantId, Map<String, String> labels)
+  List<AgentInstall> getInstallsFromResourceLabels(String tenantId, Map<String, String> resourceLabels)
       throws IllegalArgumentException {
-    if (labels.size() == 0) {
+    if (resourceLabels.size() == 0) {
       throw new IllegalArgumentException("Labels must be provided for search");
     }
 
@@ -180,7 +179,7 @@ public class AgentInstallService {
     paramSource.addValue("tenantId", tenantId);
     StringBuilder builder = new StringBuilder();
     int i = 0;
-    for (Map.Entry<String, String> entry : labels.entrySet()) {
+    for (Map.Entry<String, String> entry : resourceLabels.entrySet()) {
       if (i > 0) {
         builder.append(" OR ");
       }
@@ -315,7 +314,7 @@ public class AgentInstallService {
     // ...so group them first by agent type
     final LinkedMultiValueMap<AgentType, AgentInstall> grouped = new LinkedMultiValueMap<>();
     for (AgentInstall agentInstall :
-        getInstallsFromLabels(resource.getTenantId(), resource.getLabels())) {
+        getInstallsFromResourceLabels(resource.getTenantId(), resource.getLabels())) {
       grouped.add(agentInstall.getAgentRelease().getType(), agentInstall);
     }
 
