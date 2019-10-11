@@ -158,7 +158,7 @@ public class AgentReleaseServiceTest {
             .setAgentRelease(release)
             .setTenantId(tenantId)
             .setLabelSelector(labelSelector)
-            .setLabelSelectorMethod(LabelSelectorMethod.AND)
+            .setLabelSelectorMethod(labelSelectorMethod)
     );
   }
 

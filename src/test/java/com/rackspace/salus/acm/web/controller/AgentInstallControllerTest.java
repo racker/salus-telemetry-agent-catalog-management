@@ -156,6 +156,35 @@ public class AgentInstallControllerTest {
   }
 
   @Test
+  public void testCreateWithOr() throws Exception {
+    final AgentRelease release = populateRelease();
+    final AgentInstall install = populateInstall(release);
+
+    when(agentInstallService.install(any(), any()))
+        .thenReturn(install);
+
+    mockMvc.perform(
+        post("/api/tenant/{tenantId}/agent-installs", "t-1")
+            .accept(MediaType.APPLICATION_JSON)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(
+                JsonTestUtils.readContent("AgentInstallControllerTest/agent_install_create_with_or.json")))
+        .andExpect(status().isCreated())
+        .andExpect(content().json(
+            // id field should not be returned
+            readContent("AgentInstallControllerTest/agent_install_response.json"), true));
+
+    verify(agentInstallService).install("t-1", new AgentInstallCreate()
+        .setAgentReleaseId(release.getId())
+        .setLabelSelector(Collections.singletonMap("os", "linux"))
+        .setLabelSelectorMethod(LabelSelectorMethod.OR)
+    );
+
+    verifyNoMoreInteractions(
+        boundAgentInstallRepository, agentInstallRepository, agentInstallService);
+  }
+
+  @Test
   public void testDelete() throws Exception {
     final AgentRelease release = populateRelease();
     final AgentInstall install = populateInstall(release);

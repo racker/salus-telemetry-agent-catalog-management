@@ -206,8 +206,6 @@ public class AgentInstallService {
 
     monitorIds.addAll(monitorOrIds);
 
-    //combine the lists of UUID's here
-
     // use JPA to retrieve and resolve the entities and then convert Iterable result to list
     final ArrayList<AgentInstall> results = new ArrayList<>();
     for (AgentInstall agentInstall : agentInstallRepository.findAllById(monitorIds)) {
