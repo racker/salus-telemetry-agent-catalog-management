@@ -14,18 +14,11 @@ AND agent_installs.id IN
   )
   AND    agent_installs.id IN
   (
-    SELECT   search_labels.agent_install_id
-    FROM
-      (
-        SELECT  inner_ails.agent_install_id,
-          COUNT(*) AS count
-        FROM     agent_install_label_selectors AS inner_ails
-        WHERE    %s
-        GROUP BY inner_ails.agent_install_id
-      )
-      AS     search_labels
-    WHERE    search_labels.count >= 1
-    GROUP BY search_labels.agent_install_id
+    SELECT  inner_ails.agent_install_id
+    FROM     agent_install_label_selectors AS inner_ails
+    WHERE    %s
+    GROUP BY inner_ails.agent_install_id
+    HAVING COUNT(*) >= 1
   )
 )
 ORDER BY agent_installs.id
