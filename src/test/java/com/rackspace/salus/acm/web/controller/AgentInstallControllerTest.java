@@ -31,6 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.rackspace.salus.telemetry.entities.AgentInstall;
 import com.rackspace.salus.telemetry.entities.AgentRelease;
 import com.rackspace.salus.telemetry.entities.BoundAgentInstall;
+import com.rackspace.salus.telemetry.model.LabelSelectorMethod;
 import com.rackspace.salus.telemetry.repositories.AgentInstallRepository;
 import com.rackspace.salus.telemetry.repositories.BoundAgentInstallRepository;
 import com.rackspace.salus.acm.services.AgentInstallService;
@@ -147,6 +148,36 @@ public class AgentInstallControllerTest {
     verify(agentInstallService).install("t-1", new AgentInstallCreate()
         .setAgentReleaseId(release.getId())
         .setLabelSelector(Collections.singletonMap("os", "linux"))
+        .setLabelSelectorMethod(LabelSelectorMethod.AND)
+    );
+
+    verifyNoMoreInteractions(
+        boundAgentInstallRepository, agentInstallRepository, agentInstallService);
+  }
+
+  @Test
+  public void testCreateWithOr() throws Exception {
+    final AgentRelease release = populateRelease();
+    final AgentInstall install = populateInstall(release);
+
+    when(agentInstallService.install(any(), any()))
+        .thenReturn(install);
+
+    mockMvc.perform(
+        post("/api/tenant/{tenantId}/agent-installs", "t-1")
+            .accept(MediaType.APPLICATION_JSON)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(
+                JsonTestUtils.readContent("AgentInstallControllerTest/agent_install_create_with_or.json")))
+        .andExpect(status().isCreated())
+        .andExpect(content().json(
+            // id field should not be returned
+            readContent("AgentInstallControllerTest/agent_install_response.json"), true));
+
+    verify(agentInstallService).install("t-1", new AgentInstallCreate()
+        .setAgentReleaseId(release.getId())
+        .setLabelSelector(Collections.singletonMap("os", "linux"))
+        .setLabelSelectorMethod(LabelSelectorMethod.OR)
     );
 
     verifyNoMoreInteractions(
@@ -188,6 +219,7 @@ public class AgentInstallControllerTest {
     return new AgentInstall()
         .setId(UUID.fromString("00000000-0000-0000-0002-000000000000"))
         .setLabelSelector(singletonMap("os", "linux"))
+        .setLabelSelectorMethod(LabelSelectorMethod.AND)
         .setTenantId("t-1")
         .setCreatedTimestamp(Instant.ofEpochSecond(100002))
         .setUpdatedTimestamp(Instant.ofEpochSecond(100003))

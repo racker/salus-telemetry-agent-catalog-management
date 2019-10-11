@@ -18,6 +18,7 @@ package com.rackspace.salus.acm.web.model;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import com.rackspace.salus.telemetry.entities.AgentInstall;
+import com.rackspace.salus.telemetry.model.LabelSelectorMethod;
 import com.rackspace.salus.telemetry.model.View;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
@@ -37,6 +38,8 @@ public class AgentInstallDTO {
 
   Map<String, String> labelSelector;
 
+  LabelSelectorMethod labelSelectorMethod;
+
   String createdTimestamp;
   String updatedTimestamp;
 
@@ -47,5 +50,6 @@ public class AgentInstallDTO {
     this.labelSelector = agentInstall.getLabelSelector();
     this.createdTimestamp = DateTimeFormatter.ISO_INSTANT.format(agentInstall.getCreatedTimestamp());
     this.updatedTimestamp = DateTimeFormatter.ISO_INSTANT.format(agentInstall.getUpdatedTimestamp());
+    this.labelSelectorMethod = agentInstall.getLabelSelectorMethod();
   }
 }

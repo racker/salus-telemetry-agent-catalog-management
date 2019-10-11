@@ -63,6 +63,7 @@ public class AgentInstallService {
   private final ResourceApi resourceApi;
   private final BoundEventSender boundEventSender;
   private final String labelMatchQuery;
+  private final String labelMatchORQuery;
 
   @Autowired
   public AgentInstallService(JdbcTemplate jdbcTemplate,
@@ -80,6 +81,7 @@ public class AgentInstallService {
     this.resourceApi = resourceApi;
     this.boundEventSender = boundEventSender;
     labelMatchQuery = SpringResourceUtils.readContent("sql-queries/agent_installs_label_matching_query.sql");
+    labelMatchORQuery = SpringResourceUtils.readContent("sql-queries/agent_installs_label_matching_OR_query.sql");
   }
 
   public AgentInstall install(String tenantId, AgentInstallCreate in) {
@@ -101,7 +103,8 @@ public class AgentInstallService {
     final AgentInstall agentInstall = new AgentInstall()
         .setAgentRelease(agentRelease)
         .setLabelSelector(in.getLabelSelector())
-        .setTenantId(tenantId);
+        .setTenantId(tenantId)
+        .setLabelSelectorMethod(in.getLabelSelectorMethod());
 
     final AgentInstall saved = agentInstallRepository.save(agentInstall);
 
@@ -166,9 +169,9 @@ public class AgentInstallService {
     }
   }
 
-  List<AgentInstall> getInstallsFromLabels(String tenantId, Map<String, String> labels)
+  List<AgentInstall> getInstallsFromResourceLabels(String tenantId, Map<String, String> resourceLabels)
       throws IllegalArgumentException {
-    if (labels.size() == 0) {
+    if (resourceLabels.size() == 0) {
       throw new IllegalArgumentException("Labels must be provided for search");
     }
 
@@ -176,7 +179,7 @@ public class AgentInstallService {
     paramSource.addValue("tenantId", tenantId);
     StringBuilder builder = new StringBuilder();
     int i = 0;
-    for (Map.Entry<String, String> entry : labels.entrySet()) {
+    for (Map.Entry<String, String> entry : resourceLabels.entrySet()) {
       if (i > 0) {
         builder.append(" OR ");
       }
@@ -197,6 +200,12 @@ public class AgentInstallService {
         (resultSet, rowIndex) -> UUID.fromString(resultSet.getString(1))
     );
 
+    final List<UUID> monitorOrIds = namedParameterTemplate.query(String.format(labelMatchORQuery, builder.toString()), paramSource,
+        (resultSet, rowIndex) -> UUID.fromString(resultSet.getString(1))
+    );
+
+    monitorIds.addAll(monitorOrIds);
+
     // use JPA to retrieve and resolve the entities and then convert Iterable result to list
     final ArrayList<AgentInstall> results = new ArrayList<>();
     for (AgentInstall agentInstall : agentInstallRepository.findAllById(monitorIds)) {
@@ -208,7 +217,7 @@ public class AgentInstallService {
 
   private void bindInstallToResources(AgentInstall agentInstall) {
     final List<ResourceDTO> resources = resourceApi
-        .getResourcesWithLabels(agentInstall.getTenantId(), agentInstall.getLabelSelector());
+        .getResourcesWithLabels(agentInstall.getTenantId(), agentInstall.getLabelSelector(), agentInstall.getLabelSelectorMethod());
 
     log.debug("Found resources={} matching selector of agentInstall={}", resources, agentInstall);
 
@@ -303,7 +312,7 @@ public class AgentInstallService {
     // ...so group them first by agent type
     final LinkedMultiValueMap<AgentType, AgentInstall> grouped = new LinkedMultiValueMap<>();
     for (AgentInstall agentInstall :
-        getInstallsFromLabels(resource.getTenantId(), resource.getLabels())) {
+        getInstallsFromResourceLabels(resource.getTenantId(), resource.getLabels())) {
       grouped.add(agentInstall.getAgentRelease().getType(), agentInstall);
     }
 

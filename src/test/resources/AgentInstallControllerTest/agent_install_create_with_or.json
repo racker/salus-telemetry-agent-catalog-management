@@ -3,5 +3,5 @@
   "labelSelector": {
     "os": "linux"
   },
-  "labelSelectorMethod": "AND"
+  "labelSelectorMethod": "OR"
 }

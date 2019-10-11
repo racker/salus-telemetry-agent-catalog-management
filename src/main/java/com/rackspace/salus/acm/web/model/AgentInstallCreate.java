@@ -16,6 +16,7 @@
 
 package com.rackspace.salus.acm.web.model;
 
+import com.rackspace.salus.telemetry.model.LabelSelectorMethod;
 import java.util.Map;
 import java.util.UUID;
 import javax.validation.constraints.NotNull;
@@ -29,4 +30,7 @@ public class AgentInstallCreate {
 
   @NotNull
   Map<String, String> labelSelector;
+
+  @NotNull
+  LabelSelectorMethod labelSelectorMethod;
 }
