@@ -1,8 +1,6 @@
 salus:
   environment: local
 spring:
-  application:
-    name: salus-telemetry-agent-catalog-management
   kafka:
     producer:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
