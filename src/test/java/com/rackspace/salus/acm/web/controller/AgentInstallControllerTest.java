@@ -28,15 +28,15 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.rackspace.salus.acm.services.AgentInstallService;
+import com.rackspace.salus.acm.web.model.AgentInstallCreate;
 import com.rackspace.salus.telemetry.entities.AgentInstall;
 import com.rackspace.salus.telemetry.entities.AgentRelease;
 import com.rackspace.salus.telemetry.entities.BoundAgentInstall;
+import com.rackspace.salus.telemetry.model.AgentType;
 import com.rackspace.salus.telemetry.model.LabelSelectorMethod;
 import com.rackspace.salus.telemetry.repositories.AgentInstallRepository;
 import com.rackspace.salus.telemetry.repositories.BoundAgentInstallRepository;
-import com.rackspace.salus.acm.services.AgentInstallService;
-import com.rackspace.salus.acm.web.model.AgentInstallCreate;
-import com.rackspace.salus.telemetry.model.AgentType;
 import com.rackspace.salus.test.JsonTestUtils;
 import java.time.Instant;
 import java.util.Collections;
@@ -44,7 +44,6 @@ import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureDataJpa;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.Page;
@@ -56,7 +55,6 @@ import org.springframework.test.web.servlet.MockMvc;
 
 @RunWith(SpringRunner.class)
 @WebMvcTest(controllers = AgentInstallController.class)
-@AutoConfigureDataJpa
 public class AgentInstallControllerTest {
 
   @Autowired

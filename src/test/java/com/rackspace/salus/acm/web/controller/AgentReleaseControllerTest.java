@@ -28,11 +28,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.rackspace.salus.telemetry.entities.AgentRelease;
-import com.rackspace.salus.telemetry.repositories.AgentReleaseRepository;
 import com.rackspace.salus.acm.services.AgentReleaseService;
 import com.rackspace.salus.acm.web.model.AgentReleaseCreate;
+import com.rackspace.salus.telemetry.entities.AgentRelease;
 import com.rackspace.salus.telemetry.model.AgentType;
+import com.rackspace.salus.telemetry.repositories.AgentReleaseRepository;
 import com.rackspace.salus.test.JsonTestUtils;
 import java.time.Instant;
 import java.util.Collections;
@@ -41,7 +41,6 @@ import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureDataJpa;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.Page;
@@ -53,7 +52,6 @@ import org.springframework.test.web.servlet.MockMvc;
 
 @RunWith(SpringRunner.class)
 @WebMvcTest(controllers = AgentReleaseController.class)
-@AutoConfigureDataJpa
 public class AgentReleaseControllerTest {
 
   @Autowired
