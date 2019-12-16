@@ -16,22 +16,21 @@
 
 package com.rackspace.salus.acm.services;
 
-import com.github.zafarkhaja.semver.Version;
+import com.rackspace.salus.acm.web.model.AgentInstallCreate;
 import com.rackspace.salus.common.util.SpringResourceUtils;
+import com.rackspace.salus.resource_management.web.client.ResourceApi;
+import com.rackspace.salus.resource_management.web.model.ResourceDTO;
 import com.rackspace.salus.telemetry.entities.AgentInstall;
 import com.rackspace.salus.telemetry.entities.AgentRelease;
 import com.rackspace.salus.telemetry.entities.BoundAgentInstall;
-import com.rackspace.salus.telemetry.repositories.AgentInstallRepository;
-import com.rackspace.salus.telemetry.repositories.AgentReleaseRepository;
-import com.rackspace.salus.telemetry.repositories.BoundAgentInstallRepository;
-import com.rackspace.salus.acm.web.model.AgentInstallCreate;
-import com.rackspace.salus.resource_management.web.client.ResourceApi;
-import com.rackspace.salus.resource_management.web.model.ResourceDTO;
 import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
 import com.rackspace.salus.telemetry.messaging.OperationType;
 import com.rackspace.salus.telemetry.messaging.ResourceEvent;
 import com.rackspace.salus.telemetry.model.AgentType;
 import com.rackspace.salus.telemetry.model.NotFoundException;
+import com.rackspace.salus.telemetry.repositories.AgentInstallRepository;
+import com.rackspace.salus.telemetry.repositories.AgentReleaseRepository;
+import com.rackspace.salus.telemetry.repositories.BoundAgentInstallRepository;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,7 +41,9 @@ import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.persistence.EntityManager;
+import javax.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -84,6 +85,7 @@ public class AgentInstallService {
     labelMatchORQuery = SpringResourceUtils.readContent("sql-queries/agent_installs_label_matching_OR_query.sql");
   }
 
+  @Transactional
   public AgentInstall install(String tenantId, AgentInstallCreate in) {
     Assert.notNull(tenantId, "tenantId is required");
 
@@ -280,14 +282,13 @@ public class AgentInstallService {
 
     log.debug("Reconciling binding={} against existing={}", binding, others);
 
-    final Version ourVersion = versionOf(binding);
+    final ComparableVersion ourVersion = versionOf(binding);
 
     final List<BoundAgentInstall> othersSorted = new ArrayList<>(others);
     othersSorted.sort(Comparator.comparing(AgentInstallService::versionOf));
 
-    final boolean keepOurs = ourVersion.greaterThan(
-        versionOf(othersSorted.get(0))
-    );
+    // test if our version is greater than the existing/other version
+    final boolean keepOurs = ourVersion.compareTo(versionOf(othersSorted.get(0))) > 0;
 
     if (keepOurs) {
       // delete all of the others since they're all older
@@ -444,12 +445,11 @@ public class AgentInstallService {
     }
   }
 
-  private static Version versionOf(BoundAgentInstall boundInstall) {
-    return Version
-        .valueOf(boundInstall.getAgentInstall().getAgentRelease().getVersion());
+  private static ComparableVersion versionOf(BoundAgentInstall boundInstall) {
+    return new ComparableVersion(boundInstall.getAgentInstall().getAgentRelease().getVersion());
   }
 
-  private static Version versionOf(AgentInstall install) {
-    return Version.valueOf(install.getAgentRelease().getVersion());
+  private static ComparableVersion versionOf(AgentInstall install) {
+    return new ComparableVersion(install.getAgentRelease().getVersion());
   }
 }

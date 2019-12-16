@@ -20,6 +20,7 @@ import static com.rackspace.salus.telemetry.model.AgentType.FILEBEAT;
 import static com.rackspace.salus.telemetry.model.AgentType.TELEGRAF;
 import static java.util.Collections.emptyMap;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -27,21 +28,22 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import com.rackspace.salus.telemetry.entities.AgentInstall;
-import com.rackspace.salus.telemetry.entities.AgentRelease;
-import com.rackspace.salus.telemetry.entities.BoundAgentInstall;
-import com.rackspace.salus.telemetry.model.LabelSelectorMethod;
-import com.rackspace.salus.telemetry.repositories.AgentInstallRepository;
-import com.rackspace.salus.telemetry.repositories.AgentReleaseRepository;
-import com.rackspace.salus.telemetry.repositories.BoundAgentInstallRepository;
 import com.rackspace.salus.acm.web.model.AgentInstallCreate;
 import com.rackspace.salus.resource_management.web.client.ResourceApi;
 import com.rackspace.salus.resource_management.web.model.ResourceDTO;
+import com.rackspace.salus.telemetry.entities.AgentInstall;
+import com.rackspace.salus.telemetry.entities.AgentRelease;
+import com.rackspace.salus.telemetry.entities.BoundAgentInstall;
 import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
 import com.rackspace.salus.telemetry.messaging.OperationType;
 import com.rackspace.salus.telemetry.messaging.ResourceEvent;
 import com.rackspace.salus.telemetry.model.AgentType;
+import com.rackspace.salus.telemetry.model.LabelSelectorMethod;
 import com.rackspace.salus.telemetry.model.NotFoundException;
+import com.rackspace.salus.telemetry.repositories.AgentInstallRepository;
+import com.rackspace.salus.telemetry.repositories.AgentReleaseRepository;
+import com.rackspace.salus.telemetry.repositories.BoundAgentInstallRepository;
+import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -65,6 +67,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.web.client.ResourceAccessException;
 
 @SuppressWarnings("OptionalGetWithoutIsPresent")
 @RunWith(SpringRunner.class)
@@ -510,21 +513,50 @@ public class AgentInstallServiceTest {
 
     // EXECUTE
 
-    final Map<String, String> labelSelector = Collections.singletonMap("os", "linux");
-    try {
+    assertThatThrownBy(() -> {
+      final Map<String, String> labelSelector = Collections.singletonMap("os", "linux");
       agentInstallService.install(
           "t-1",
           new AgentInstallCreate()
               .setAgentReleaseId(release1.getId())
               .setLabelSelector(labelSelector)
       );
-      fail("Expected AlreadyExistsException");
-      return;
-    } catch (AlreadyExistsException e) {
-      assertThat(e).hasMessage("AgentInstall with same release and label selector exists");
-    }
+    })
+        .isInstanceOf(AlreadyExistsException.class)
+        .hasMessage("AgentInstall with same release and label selector exists");
 
     // VERIFY
+
+    verifyNoMoreInteractions(boundEventSender, resourceApi);
+  }
+
+  @Test
+  public void testInstall_resourceManagementDown() {
+    final AgentRelease release1 = saveRelease("1.0.0", TELEGRAF);
+
+    when(resourceApi.getResourcesWithLabels(eq("t-1"), any(), eq(LabelSelectorMethod.AND)))
+        .thenThrow(new ResourceAccessException("I/O error on GET request", new ConnectException()));
+
+    // EXECUTE
+    final Map<String, String> labelSelector = Collections.singletonMap("os", "linux");
+
+    assertThatThrownBy(() -> {
+        agentInstallService.install(
+            "t-1",
+            new AgentInstallCreate()
+                .setAgentReleaseId(release1.getId())
+                .setLabelSelector(labelSelector)
+                .setLabelSelectorMethod(LabelSelectorMethod.AND)
+        );
+      })
+        .isInstanceOf(ResourceAccessException.class);
+
+    // VERIFY
+
+    // should have rolled back any DB row creation when binding threw exception
+    assertThat(agentInstallRepository.findAll()).isEmpty();
+
+    verify(resourceApi).getResourcesWithLabels("t-1", labelSelector, LabelSelectorMethod.AND);
 
     verifyNoMoreInteractions(boundEventSender, resourceApi);
   }
