@@ -16,6 +16,8 @@ spring:
   jackson:
     mapper:
       default-view-inclusion: true
+  zipkin:
+    enabled: false
 management:
   metrics:
     export:
