@@ -32,5 +32,5 @@ public class AgentInstallCreate {
   Map<String, String> labelSelector;
 
   @NotNull
-  LabelSelectorMethod labelSelectorMethod;
+  LabelSelectorMethod labelSelectorMethod = LabelSelectorMethod.AND;
 }
