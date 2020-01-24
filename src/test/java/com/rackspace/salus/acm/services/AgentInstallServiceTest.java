@@ -247,6 +247,25 @@ public class AgentInstallServiceTest {
   }
 
   @Test
+  public void testDefaultLabelSelectorMethod() {
+    final AgentRelease release1 = saveRelease("1.0.0", TELEGRAF);
+
+    Map<String, String> labelSelector = new HashMap();
+    labelSelector.put("os", "windows");
+    labelSelector.put("cluster", "prod");
+    agentInstallRepository.save(
+        new AgentInstall()
+            .setAgentRelease(release1)
+            .setTenantId("t-1")
+            .setLabelSelector(labelSelector)
+    );
+
+    List<AgentInstall> savedInstalls = agentInstallService.getInstallsFromResourceLabels("t-1", labelSelector);
+    assertThat(savedInstalls.size()).isEqualTo(1);
+    assertThat(savedInstalls.get(0).getLabelSelectorMethod()).isEqualTo(LabelSelectorMethod.AND);
+  }
+
+  @Test
   public void testInstall_noPrior_multiResource() {
     final AgentRelease release1 = saveRelease("1.0.0", TELEGRAF);
 
