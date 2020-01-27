@@ -145,6 +145,8 @@ public class AgentInstallServiceTest {
     // different labelSelectorMethod - only one label
     final AgentInstall install8 = saveInstall(
         release1, "t-1", LabelSelectorMethod.OR, "os", "linux");
+    final AgentInstall install9 = saveInstall(
+        release1, "t-1", LabelSelectorMethod.OR);
     {
       // typical case
       Map<String, String> resourceLabels = new HashMap<>();
@@ -159,7 +161,7 @@ public class AgentInstallServiceTest {
           .map(AgentInstall::getId)
           .collect(Collectors.toList());
       assertThat(installIds).containsExactlyInAnyOrder(
-          install1.getId(), install2.getId(), install3.getId(), install6.getId(), install8.getId()
+          install1.getId(), install2.getId(), install3.getId(), install6.getId(), install8.getId(), install9.getId()
       );
     }
 
@@ -195,7 +197,7 @@ public class AgentInstallServiceTest {
           .map(AgentInstall::getId)
           .collect(Collectors.toList());
       assertThat(installIds).containsExactlyInAnyOrder(
-          install4.getId(), install8.getId()
+          install4.getId(), install8.getId(), install9.getId()
       );
     }
 
@@ -212,7 +214,7 @@ public class AgentInstallServiceTest {
           .map(AgentInstall::getId)
           .collect(Collectors.toList());
       assertThat(installIds).containsExactlyInAnyOrder(
-          install1.getId(), install2.getId(), install3.getId(), install6.getId(), install8.getId()
+          install1.getId(), install2.getId(), install3.getId(), install6.getId(), install8.getId(), install9.getId()
       );
     }
 
@@ -241,7 +243,7 @@ public class AgentInstallServiceTest {
           .map(AgentInstall::getId)
           .collect(Collectors.toList());
       assertThat(installIds).containsExactlyInAnyOrder(
-          install8.getId()
+          install8.getId(), install9.getId()
       );
     }
   }
