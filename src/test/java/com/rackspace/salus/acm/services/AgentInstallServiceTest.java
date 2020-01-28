@@ -145,6 +145,7 @@ public class AgentInstallServiceTest {
     // different labelSelectorMethod - only one label
     final AgentInstall install8 = saveInstall(
         release1, "t-1", LabelSelectorMethod.OR, "os", "linux");
+    // Empty Label Selector on the install should match everything for this tenant
     final AgentInstall install9 = saveInstall(
         release1, "t-1", LabelSelectorMethod.OR);
     {
@@ -244,6 +245,21 @@ public class AgentInstallServiceTest {
           .collect(Collectors.toList());
       assertThat(installIds).containsExactlyInAnyOrder(
           install8.getId(), install9.getId()
+      );
+    }
+
+    {
+      // empty resource labels should only get installs with no labels
+      Map<String, String> resourceLabels = Collections.emptyMap();
+
+      final List<AgentInstall> matches = agentInstallService
+          .getInstallsFromResourceLabels("t-1", resourceLabels);
+
+      final List<UUID> installIds = matches.stream()
+          .map(AgentInstall::getId)
+          .collect(Collectors.toList());
+      assertThat(installIds).containsExactlyInAnyOrder(
+          install9.getId()
       );
     }
   }
@@ -1050,22 +1066,18 @@ public class AgentInstallServiceTest {
 
     final AgentRelease release = saveRelease("1.0.0", TELEGRAF);
 
-    final AgentInstall install = saveInstall(release, "t-1", LabelSelectorMethod.AND, "os", "linux");
+    final AgentInstall install1 = saveInstall(release, "t-1", LabelSelectorMethod.AND, "os", "linux");
 
-    saveBinding(install, "r-1");
+    final AgentInstall install2 = saveInstall(release, "t-1", LabelSelectorMethod.AND);
+    saveBinding(install2, "r-1");
 
     // EXECUTE
-    try {
-      agentInstallService.handleResourceEvent(
-          new ResourceEvent()
-              .setTenantId("t-1")
-              .setResourceId("r-1")
-              .setLabelsChanged(true)
-      );
-      fail("Should have thrown IllegalArgumentException");
-    } catch (IllegalArgumentException e) {
-      assertThat(e).hasMessage("Labels must be provided for search");
-    }
+    agentInstallService.handleResourceEvent(
+        new ResourceEvent()
+            .setTenantId("t-1")
+            .setResourceId("r-1")
+            .setLabelsChanged(true)
+    );
 
     // VERIFY
 
@@ -1074,7 +1086,7 @@ public class AgentInstallServiceTest {
     assertThat(bindings).hasSize(1);
     final BoundAgentInstall savedBinding = bindings.iterator().next();
     assertThat(savedBinding.getResourceId()).isEqualTo("r-1");
-    assertThat(savedBinding.getAgentInstall().getId()).isEqualTo(install.getId());
+    assertThat(savedBinding.getAgentInstall().getId()).isEqualTo(install2.getId());
 
     verify(resourceApi).getByResourceId("t-1", "r-1");
 

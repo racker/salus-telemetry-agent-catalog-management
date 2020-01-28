@@ -173,8 +173,8 @@ public class AgentInstallService {
 
   List<AgentInstall> getInstallsFromResourceLabels(String tenantId, Map<String, String> resourceLabels)
       throws IllegalArgumentException {
-    if (resourceLabels.size() == 0) {
-      throw new IllegalArgumentException("Labels must be provided for search");
+    if(resourceLabels == null || resourceLabels.isEmpty()) {
+      return agentInstallRepository.findByTenantIdAndLabelSelectorIsNull(tenantId);
     }
 
     MapSqlParameterSource paramSource = new MapSqlParameterSource();
