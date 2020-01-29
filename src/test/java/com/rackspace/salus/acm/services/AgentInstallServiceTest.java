@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Rackspace US, Inc.
+ * Copyright 2020 Rackspace US, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import com.rackspace.salus.telemetry.model.NotFoundException;
 import com.rackspace.salus.telemetry.repositories.AgentInstallRepository;
 import com.rackspace.salus.telemetry.repositories.AgentReleaseRepository;
 import com.rackspace.salus.telemetry.repositories.BoundAgentInstallRepository;
+import com.rackspace.salus.test.EnableTestContainersDatabase;
 import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -62,7 +63,6 @@ import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -72,7 +72,7 @@ import org.springframework.web.client.ResourceAccessException;
 @SuppressWarnings("OptionalGetWithoutIsPresent")
 @RunWith(SpringRunner.class)
 @SpringBootTest
-@AutoConfigureTestDatabase
+@EnableTestContainersDatabase
 @EnableAutoConfiguration(exclude = KafkaAutoConfiguration.class)
 public class AgentInstallServiceTest {
 
@@ -393,7 +393,8 @@ public class AgentInstallServiceTest {
     final BoundAgentInstall savedBinding = bindings.iterator().next();
     assertThat(savedBinding.getResourceId()).isEqualTo("r-1");
     assertThat(savedBinding.getAgentInstall().getId()).isEqualTo(agentInstall.getId());
-    assertThat(savedBinding.getAgentInstall().getAgentRelease()).isEqualTo(release2);
+    assertThat(savedBinding.getAgentInstall().getAgentRelease()).isEqualToIgnoringGivenFields(release2,
+        "createdTimestamp", "updatedTimestamp");
 
     verify(resourceApi).getResourcesWithLabels("t-1", labelSelector, LabelSelectorMethod.AND);
 
@@ -451,7 +452,8 @@ public class AgentInstallServiceTest {
     assertThat(savedBinding.getResourceId()).isEqualTo("r-1");
     // should find prior installation
     assertThat(savedBinding.getAgentInstall().getId()).isEqualTo(priorInstall.getId());
-    assertThat(savedBinding.getAgentInstall().getAgentRelease()).isEqualTo(release2);
+    assertThat(savedBinding.getAgentInstall().getAgentRelease()).isEqualToIgnoringGivenFields(release2,
+        "createdTimestamp", "updatedTimestamp");
 
     verify(resourceApi).getResourcesWithLabels("t-1", labelSelector, LabelSelectorMethod.AND);
 
@@ -510,7 +512,8 @@ public class AgentInstallServiceTest {
     assertThat(savedBinding.getResourceId()).isEqualTo("r-1");
     // should find prior installation
     assertThat(savedBinding.getAgentInstall().getId()).isEqualTo(install3.getId());
-    assertThat(savedBinding.getAgentInstall().getAgentRelease()).isEqualTo(release3);
+    assertThat(savedBinding.getAgentInstall().getAgentRelease()).isEqualToIgnoringGivenFields(release3,
+        "createdTimestamp", "updatedTimestamp");
 
     verify(resourceApi).getResourcesWithLabels("t-1", labelSelector, LabelSelectorMethod.AND);
 

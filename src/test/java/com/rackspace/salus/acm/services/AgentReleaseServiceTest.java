@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Rackspace US, Inc.
+ * Copyright 2020 Rackspace US, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,16 +19,18 @@ package com.rackspace.salus.acm.services;
 import static com.rackspace.salus.telemetry.model.AgentType.TELEGRAF;
 import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 
+import com.rackspace.salus.acm.web.model.AgentReleaseCreate;
 import com.rackspace.salus.telemetry.entities.AgentInstall;
 import com.rackspace.salus.telemetry.entities.AgentRelease;
+import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
+import com.rackspace.salus.telemetry.model.AgentType;
 import com.rackspace.salus.telemetry.model.LabelSelectorMethod;
 import com.rackspace.salus.telemetry.repositories.AgentInstallRepository;
 import com.rackspace.salus.telemetry.repositories.AgentReleaseRepository;
-import com.rackspace.salus.acm.web.model.AgentReleaseCreate;
-import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
-import com.rackspace.salus.telemetry.model.AgentType;
+import com.rackspace.salus.test.EnableTestContainersDatabase;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -38,7 +40,6 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -46,7 +47,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-@AutoConfigureTestDatabase
+@EnableTestContainersDatabase
 @EnableAutoConfiguration(exclude = KafkaAutoConfiguration.class)
 public class AgentReleaseServiceTest {
 
@@ -121,13 +122,9 @@ public class AgentReleaseServiceTest {
 
     saveInstall(release, "t-1", LabelSelectorMethod.AND, "os", "linux");
 
-    try {
+    assertThatThrownBy(() -> {
       agentReleaseService.delete(release.getId());
-      fail("Should throw DataIntegrityViolationException");
-    } catch (DataIntegrityViolationException e) {
-      assertThat(e).hasMessageContaining(
-          "PUBLIC.AGENT_INSTALLS FOREIGN KEY(AGENT_RELEASE_ID) REFERENCES PUBLIC.AGENT_RELEASES(ID)");
-    }
+    }).isInstanceOf(DataIntegrityViolationException.class);
 
     final Optional<AgentRelease> result = agentReleaseRepository.findById(release.getId());
     assertThat(result).isPresent();
