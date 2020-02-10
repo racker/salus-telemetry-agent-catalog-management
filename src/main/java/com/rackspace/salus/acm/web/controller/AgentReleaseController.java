@@ -23,7 +23,7 @@ import com.rackspace.salus.acm.web.model.AgentReleaseCreate;
 import com.rackspace.salus.acm.web.model.AgentReleaseDTO;
 import com.rackspace.salus.telemetry.model.NotFoundException;
 import com.rackspace.salus.telemetry.model.PagedContent;
-import com.rackspace.salus.telemetry.model.View;
+import com.rackspace.salus.common.web.View;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.Authorization;
@@ -65,7 +65,6 @@ public class AgentReleaseController {
   }
 
   @GetMapping("/tenant/{tenantId}/agent-releases")
-  @JsonView(View.Public.class)
   @ApiOperation(value = "Get available agent releases")
   public PagedContent<AgentReleaseDTO> getAgentReleasesForTenant(@PathVariable String tenantId,
                                                                  Pageable pageable) {
@@ -80,7 +79,6 @@ public class AgentReleaseController {
   }
 
   @GetMapping("/tenant/{tenantId}/agent-releases/{agentReleaseId}")
-  @JsonView(View.Public.class)
   @ApiOperation(value = "Get a specific agent release")
   public AgentReleaseDTO getAgentReleaseForTenant(@PathVariable String tenantId,
                                                                  @PathVariable UUID agentReleaseId,
@@ -94,7 +92,6 @@ public class AgentReleaseController {
   }
 
   @GetMapping("/admin/agent-releases")
-  @JsonView(View.Admin.class)
   @ApiOperation(value = "Get available agent releases")
   public PagedContent<AgentReleaseDTO> getAgentReleases(Pageable pageable) {
 
@@ -106,7 +103,6 @@ public class AgentReleaseController {
   }
 
   @GetMapping("/admin/agent-releases/{agentReleaseId}")
-  @JsonView(View.Admin.class)
   @ApiOperation(value = "Get a specific agent release")
   public AgentReleaseDTO getAgentRelease(@PathVariable UUID agentReleaseId) {
 
@@ -117,7 +113,6 @@ public class AgentReleaseController {
 
   @PostMapping("/admin/agent-releases")
   @ResponseStatus(HttpStatus.CREATED)
-  @JsonView(View.Admin.class)
   @ApiOperation(value = "Declare a new agent release")
   public AgentReleaseDTO declareAgentRelease(@RequestBody @Valid AgentReleaseCreate in) {
     return new AgentReleaseDTO(agentReleaseService.create(in));
@@ -125,7 +120,6 @@ public class AgentReleaseController {
 
   @DeleteMapping("/admin/agent-releases/{agentReleaseId}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
-  @JsonView(View.Admin.class)
   @ApiOperation(value = "Delete an agent release")
   public void delete(@PathVariable UUID agentReleaseId) {
     agentReleaseService.delete(agentReleaseId);
