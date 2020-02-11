@@ -16,14 +16,12 @@
 
 package com.rackspace.salus.acm.web.controller;
 
-import com.fasterxml.jackson.annotation.JsonView;
-import com.rackspace.salus.telemetry.repositories.AgentReleaseRepository;
 import com.rackspace.salus.acm.services.AgentReleaseService;
 import com.rackspace.salus.acm.web.model.AgentReleaseCreate;
 import com.rackspace.salus.acm.web.model.AgentReleaseDTO;
 import com.rackspace.salus.telemetry.model.NotFoundException;
 import com.rackspace.salus.telemetry.model.PagedContent;
-import com.rackspace.salus.common.web.View;
+import com.rackspace.salus.telemetry.repositories.AgentReleaseRepository;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.Authorization;

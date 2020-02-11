@@ -16,9 +16,6 @@
 
 package com.rackspace.salus.acm.web.controller;
 
-import com.fasterxml.jackson.annotation.JsonView;
-import com.rackspace.salus.telemetry.repositories.AgentInstallRepository;
-import com.rackspace.salus.telemetry.repositories.BoundAgentInstallRepository;
 import com.rackspace.salus.acm.services.AgentInstallService;
 import com.rackspace.salus.acm.web.client.AgentInstallApi;
 import com.rackspace.salus.acm.web.model.AgentInstallCreate;
@@ -27,7 +24,8 @@ import com.rackspace.salus.acm.web.model.BoundAgentInstallDTO;
 import com.rackspace.salus.telemetry.model.AgentType;
 import com.rackspace.salus.telemetry.model.NotFoundException;
 import com.rackspace.salus.telemetry.model.PagedContent;
-import com.rackspace.salus.common.web.View;
+import com.rackspace.salus.telemetry.repositories.AgentInstallRepository;
+import com.rackspace.salus.telemetry.repositories.BoundAgentInstallRepository;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.Authorization;
