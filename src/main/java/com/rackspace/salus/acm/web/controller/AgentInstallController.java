@@ -16,9 +16,6 @@
 
 package com.rackspace.salus.acm.web.controller;
 
-import com.fasterxml.jackson.annotation.JsonView;
-import com.rackspace.salus.telemetry.repositories.AgentInstallRepository;
-import com.rackspace.salus.telemetry.repositories.BoundAgentInstallRepository;
 import com.rackspace.salus.acm.services.AgentInstallService;
 import com.rackspace.salus.acm.web.client.AgentInstallApi;
 import com.rackspace.salus.acm.web.model.AgentInstallCreate;
@@ -27,7 +24,8 @@ import com.rackspace.salus.acm.web.model.BoundAgentInstallDTO;
 import com.rackspace.salus.telemetry.model.AgentType;
 import com.rackspace.salus.telemetry.model.NotFoundException;
 import com.rackspace.salus.telemetry.model.PagedContent;
-import com.rackspace.salus.telemetry.model.View;
+import com.rackspace.salus.telemetry.repositories.AgentInstallRepository;
+import com.rackspace.salus.telemetry.repositories.BoundAgentInstallRepository;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.Authorization;
@@ -72,7 +70,6 @@ public class AgentInstallController implements AgentInstallApi {
 
   @Override
   @GetMapping("/admin/bound-agent-installs/{tenantId}/{resourceId}/{agentType}")
-  @JsonView(View.Admin.class)
   @ApiOperation(value = "Gets bound agent installation for the given tenant resource and agent type")
   public BoundAgentInstallDTO getBindingForResourceAndAgentType(
       @PathVariable String tenantId, @PathVariable String resourceId,
@@ -84,7 +81,6 @@ public class AgentInstallController implements AgentInstallApi {
   }
 
   @GetMapping("/tenant/{tenantId}/agent-installs")
-  @JsonView(View.Public.class)
   @ApiOperation(value = "Gets all agent installations")
   public PagedContent<AgentInstallDTO> getAgentInstalls(@PathVariable String tenantId,
                                                         Pageable pageable) {
@@ -96,7 +92,6 @@ public class AgentInstallController implements AgentInstallApi {
 
   @PostMapping("/tenant/{tenantId}/agent-installs")
   @ResponseStatus(HttpStatus.CREATED)
-  @JsonView(View.Public.class)
   @ApiOperation(value = "Create a new agent installation")
   public AgentInstallDTO create(@PathVariable String tenantId,
                                 @RequestBody AgentInstallCreate in) {
@@ -105,7 +100,6 @@ public class AgentInstallController implements AgentInstallApi {
 
   @DeleteMapping("/tenant/{tenantId}/agent-installs/{agentInstallId}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
-  @JsonView(View.Public.class)
   @ApiOperation(value = "Delete an agent installation")
   public void delete(@PathVariable String tenantId, @PathVariable UUID agentInstallId) {
     agentInstallService.delete(tenantId, agentInstallId);

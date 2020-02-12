@@ -19,7 +19,7 @@ package com.rackspace.salus.acm.web.model;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.rackspace.salus.telemetry.entities.AgentInstall;
 import com.rackspace.salus.telemetry.model.LabelSelectorMethod;
-import com.rackspace.salus.telemetry.model.View;
+import com.rackspace.salus.common.web.View;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.UUID;
