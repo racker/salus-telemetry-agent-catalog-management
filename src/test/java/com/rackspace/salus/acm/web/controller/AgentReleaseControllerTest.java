@@ -18,6 +18,7 @@ package com.rackspace.salus.acm.web.controller;
 
 import static com.rackspace.salus.test.JsonTestUtils.readContent;
 import static java.util.Collections.singletonMap;
+import static org.hamcrest.CoreMatchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -26,6 +27,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.rackspace.salus.acm.services.AgentReleaseService;
@@ -33,11 +35,14 @@ import com.rackspace.salus.acm.web.model.AgentReleaseCreate;
 import com.rackspace.salus.telemetry.entities.AgentRelease;
 import com.rackspace.salus.telemetry.model.AgentType;
 import com.rackspace.salus.telemetry.repositories.AgentReleaseRepository;
+import com.rackspace.salus.telemetry.repositories.TenantMetadataRepository;
+import com.rackspace.salus.telemetry.web.TenantVerification;
 import com.rackspace.salus.test.JsonTestUtils;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,6 +67,50 @@ public class AgentReleaseControllerTest {
 
   @MockBean
   AgentReleaseService agentReleaseService;
+
+  @MockBean
+  TenantMetadataRepository tenantMetadataRepository;
+
+  @Test
+  public void testTenantVerification_Success() throws Exception {
+    String tenantId = RandomStringUtils.randomAlphabetic( 8 );
+    final AgentRelease release = populateRelease();
+
+    when(agentReleaseRepository.findAll(any()))
+        .thenReturn(pageOfSingleton(release));
+    when(tenantMetadataRepository.existsByTenantId(tenantId))
+        .thenReturn(true);
+
+    mockMvc.perform(get(
+        "/api/tenant/{tenantId}/agent-releases?page=0&size=1", tenantId)
+        .accept(MediaType.APPLICATION_JSON)
+        // header must be set to trigger tenant verification
+        .header(TenantVerification.HEADER_TENANT, tenantId))
+        .andExpect(status().isOk());
+
+    verify(tenantMetadataRepository).existsByTenantId(tenantId);
+  }
+
+  @Test
+  public void testTenantVerification_Fail() throws Exception {
+    String tenantId = RandomStringUtils.randomAlphabetic( 8 );
+    final AgentRelease release = populateRelease();
+
+    when(agentReleaseRepository.findAll(any()))
+        .thenReturn(pageOfSingleton(release));
+    when(tenantMetadataRepository.existsByTenantId(tenantId))
+        .thenReturn(false);
+
+    mockMvc.perform(get(
+        "/api/tenant/{tenantId}/agent-releases?page=0&size=1", tenantId)
+        .accept(MediaType.APPLICATION_JSON)
+        // header must be set to trigger tenant verification
+        .header(TenantVerification.HEADER_TENANT, tenantId))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.message", is(TenantVerification.ERROR_MSG)));
+
+    verify(tenantMetadataRepository).existsByTenantId(tenantId);
+  }
 
   @Test
   public void testGetAgentReleasesForTenant() throws Exception {
