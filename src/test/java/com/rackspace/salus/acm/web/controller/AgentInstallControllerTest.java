@@ -37,6 +37,7 @@ import com.rackspace.salus.telemetry.model.AgentType;
 import com.rackspace.salus.telemetry.model.LabelSelectorMethod;
 import com.rackspace.salus.telemetry.repositories.AgentInstallRepository;
 import com.rackspace.salus.telemetry.repositories.BoundAgentInstallRepository;
+import com.rackspace.salus.telemetry.repositories.TenantMetadataRepository;
 import com.rackspace.salus.test.JsonTestUtils;
 import java.time.Instant;
 import java.util.Collections;
@@ -65,6 +66,9 @@ public class AgentInstallControllerTest {
 
   @MockBean
   BoundAgentInstallRepository boundAgentInstallRepository;
+
+  @MockBean
+  TenantMetadataRepository tenantMetadataRepository;
 
   @MockBean
   AgentInstallService agentInstallService;
