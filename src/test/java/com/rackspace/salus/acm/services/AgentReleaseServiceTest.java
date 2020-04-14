@@ -39,7 +39,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.cache.CacheType;
 import org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration;
+import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -49,6 +51,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 @SpringBootTest
 @EnableTestContainersDatabase
 @EnableAutoConfiguration(exclude = KafkaAutoConfiguration.class)
+// skip the cache config to avoid cache already exists errors
+@AutoConfigureCache(cacheProvider = CacheType.NONE)
 public class AgentReleaseServiceTest {
 
   @MockBean

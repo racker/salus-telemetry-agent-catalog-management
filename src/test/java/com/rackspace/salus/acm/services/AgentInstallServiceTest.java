@@ -43,6 +43,7 @@ import com.rackspace.salus.telemetry.model.NotFoundException;
 import com.rackspace.salus.telemetry.repositories.AgentInstallRepository;
 import com.rackspace.salus.telemetry.repositories.AgentReleaseRepository;
 import com.rackspace.salus.telemetry.repositories.BoundAgentInstallRepository;
+import com.rackspace.salus.telemetry.repositories.TenantMetadataRepository;
 import com.rackspace.salus.test.EnableTestContainersDatabase;
 import java.net.ConnectException;
 import java.util.ArrayList;
@@ -62,7 +63,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.cache.CacheType;
 import org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration;
+import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -74,6 +77,8 @@ import org.springframework.web.client.ResourceAccessException;
 @SpringBootTest
 @EnableTestContainersDatabase
 @EnableAutoConfiguration(exclude = KafkaAutoConfiguration.class)
+// skip the cache config to avoid cache already exists errors
+@AutoConfigureCache(cacheProvider = CacheType.NONE)
 public class AgentInstallServiceTest {
 
   @MockBean
@@ -87,6 +92,9 @@ public class AgentInstallServiceTest {
 
   @MockBean
   ResourceEventListener resourceEventListener;
+
+  @MockBean
+  TenantMetadataRepository tenantMetadataRepository;
 
   @Autowired
   AgentReleaseService agentReleaseService;
