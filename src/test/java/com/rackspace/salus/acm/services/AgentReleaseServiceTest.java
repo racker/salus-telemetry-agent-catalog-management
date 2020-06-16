@@ -22,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 
+import com.rackspace.salus.acm.web.controller.AgentReleaseControllerTest;
 import com.rackspace.salus.acm.web.model.AgentReleaseCreate;
 import com.rackspace.salus.telemetry.entities.AgentInstall;
 import com.rackspace.salus.telemetry.entities.AgentRelease;
@@ -45,6 +46,8 @@ import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
@@ -108,6 +111,22 @@ public class AgentReleaseServiceTest {
       assertThat(e).hasMessage("An agent release with same type, version, and labels already exists");
     }
 
+  }
+
+  /**
+   * This test confirms the expected behavior in
+   * {@link AgentReleaseControllerTest#testGetAgentReleasesForTenant_specificType_beyondLastPage()}
+   * where the repository is mocked.
+   */
+  @Test
+  public void testQueryRepositoryBeyondLastPage() {
+    saveRelease("1.11.0", TELEGRAF, singletonMap("os", "linux"));
+
+    final Page<AgentRelease> page = agentReleaseRepository.findAll(PageRequest.of(500, 5));
+    assertThat(page.getTotalElements()).isEqualTo(1);
+    assertThat(page.getContent()).isEmpty();
+    assertThat(page.getTotalPages()).isEqualTo(1);
+    assertThat(page.getNumber()).isEqualTo(500);
   }
 
   @Test
