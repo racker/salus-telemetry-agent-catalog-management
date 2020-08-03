@@ -142,6 +142,7 @@ public class AgentInstallService {
     }
   }
 
+  @Transactional
   void deleteAllAgentInstallsForTenant(String tenantId) {
     final List<BoundAgentInstall> bound = boundAgentInstallRepository
         .findAllByTenant(tenantId);

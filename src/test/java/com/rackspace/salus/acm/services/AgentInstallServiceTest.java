@@ -705,10 +705,10 @@ public class AgentInstallServiceTest {
     saveBinding(install, "r-1");
     saveBinding(install, "r-2");
 
-    /*final AgentInstall install2 = saveInstall(release, "t-1", LabelSelectorMethod.AND, "os", "linux");
+    final AgentInstall install2 = saveInstall(release, "t-1", LabelSelectorMethod.AND, "os", "linux");
 
     saveBinding(install2, "r-1");
-    saveBinding(install2, "r-2");*/
+    saveBinding(install2, "r-2");
 
     // EXECUTE
     agentInstallService.deleteAllAgentInstallsForTenant("t-1");
@@ -718,8 +718,8 @@ public class AgentInstallServiceTest {
     final Optional<AgentInstall> saved = agentInstallRepository.findById(install.getId());
     assertThat(saved).isNotPresent();
 
-    //final Optional<AgentInstall> saved2 = agentInstallRepository.findById(install2.getId());
-    //assertThat(saved2).isNotPresent();
+    final Optional<AgentInstall> saved2 = agentInstallRepository.findById(install2.getId());
+    assertThat(saved2).isNotPresent();
 
     final Iterable<BoundAgentInstall> bindings = boundAgentInstallRepository.findAll();
     assertThat(bindings).isEmpty();
