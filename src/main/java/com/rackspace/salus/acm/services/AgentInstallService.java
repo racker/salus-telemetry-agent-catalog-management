@@ -142,6 +142,25 @@ public class AgentInstallService {
     }
   }
 
+  void deleteAllAgentInstallsForTenant(String tenantId) {
+    final List<BoundAgentInstall> bound = boundAgentInstallRepository
+        .findAllByTenant(tenantId);
+
+    final List<TenantResource> affectedResourceIds = bound.stream()
+        .map(BoundAgentInstall::getResourceId)
+        .distinct()
+        .map(resourceId -> new TenantResource(tenantId,resourceId))
+        .collect(Collectors.toList());
+
+    boundAgentInstallRepository.deleteAll(bound);
+    agentInstallRepository.deleteAllByTenantId(tenantId);
+
+    if (!affectedResourceIds.isEmpty()) {
+      boundEventSender.sendTo(
+          OperationType.DELETE, null, affectedResourceIds);
+    }
+  }
+
   void handleResourceEvent(ResourceEvent resourceEvent) {
     log.debug("Handling resourceEvent={}", resourceEvent);
 
