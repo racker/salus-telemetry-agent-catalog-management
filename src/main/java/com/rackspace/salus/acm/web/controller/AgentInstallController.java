@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Rackspace US, Inc.
+ * Copyright 2020 Rackspace US, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package com.rackspace.salus.acm.web.controller;
@@ -103,5 +104,12 @@ public class AgentInstallController implements AgentInstallApi {
   @ApiOperation(value = "Delete an agent installation")
   public void delete(@PathVariable String tenantId, @PathVariable UUID agentInstallId) {
     agentInstallService.delete(tenantId, agentInstallId);
+  }
+
+  @DeleteMapping("/admin/tenant/{tenantId}/agent-installs/")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  @ApiOperation(value = "Delete all agent installations for tenant")
+  public void deleteAllForTenant(@PathVariable String tenantId, @PathVariable UUID agentInstallId) {
+    agentInstallService.deleteAllAgentInstallsForTenant(tenantId);
   }
 }
