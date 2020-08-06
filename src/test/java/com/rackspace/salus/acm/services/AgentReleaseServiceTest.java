@@ -51,7 +51,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest
+@SpringBootTest(
+    properties = {
+        "salus.services.resourceManagementUrl=http://localhost:8085"
+    }
+)
 @EnableTestContainersDatabase
 @EnableAutoConfiguration(exclude = KafkaAutoConfiguration.class)
 // skip the cache config to avoid cache already exists errors
