@@ -74,7 +74,11 @@ import org.springframework.web.client.ResourceAccessException;
 
 @SuppressWarnings("OptionalGetWithoutIsPresent")
 @RunWith(SpringRunner.class)
-@SpringBootTest
+@SpringBootTest(
+    properties = {
+        "salus.services.resourceManagementUrl=http://this-is-a-non-null-value"
+    }
+)
 @EnableTestContainersDatabase
 @EnableAutoConfiguration(exclude = KafkaAutoConfiguration.class)
 // skip the cache config to avoid cache already exists errors
