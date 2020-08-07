@@ -106,10 +106,10 @@ public class AgentInstallController implements AgentInstallApi {
     agentInstallService.delete(tenantId, agentInstallId);
   }
 
-  @DeleteMapping("/admin/tenant/{tenantId}/agent-installs/")
+  @DeleteMapping("/admin/tenant/{tenantId}/agent-installs")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   @ApiOperation(value = "Delete all agent installations for tenant")
-  public void deleteAllForTenant(@PathVariable String tenantId, @PathVariable UUID agentInstallId) {
+  public void deleteAllForTenant(@PathVariable String tenantId) {
     agentInstallService.deleteAllAgentInstallsForTenant(tenantId);
   }
 }
