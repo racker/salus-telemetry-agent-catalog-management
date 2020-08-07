@@ -53,7 +53,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 @RunWith(SpringRunner.class)
 @SpringBootTest(
     properties = {
-        "salus.services.resourceManagementUrl=http://localhost:8085"
+        "salus.services.resourceManagementUrl=http://this-is-a-non-null-value"
     }
 )
 @EnableTestContainersDatabase
