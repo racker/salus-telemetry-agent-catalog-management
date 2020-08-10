@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Rackspace US, Inc.
+ * Copyright 2020 Rackspace US, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package com.rackspace.salus.acm.services;
@@ -139,6 +140,26 @@ public class AgentInstallService {
     if (!affectedResourceIds.isEmpty()) {
       boundEventSender.sendTo(
           OperationType.DELETE, agentInstall.getAgentRelease().getType(), affectedResourceIds);
+    }
+  }
+
+  @Transactional
+  public void deleteAllAgentInstallsForTenant(String tenantId) {
+    final List<BoundAgentInstall> bound = boundAgentInstallRepository
+        .findAllByTenant(tenantId);
+
+    final List<TenantResource> affectedResourceIds = bound.stream()
+        .map(BoundAgentInstall::getResourceId)
+        .distinct()
+        .map(resourceId -> new TenantResource(tenantId,resourceId))
+        .collect(Collectors.toList());
+
+    boundAgentInstallRepository.deleteAll(bound);
+    agentInstallRepository.deleteAllByTenantId(tenantId);
+
+    if (!affectedResourceIds.isEmpty()) {
+      boundEventSender.sendTo(
+          OperationType.DELETE, null, affectedResourceIds);
     }
   }
 

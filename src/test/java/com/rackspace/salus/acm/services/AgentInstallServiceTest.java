@@ -701,6 +701,45 @@ public class AgentInstallServiceTest {
   }
 
   @Test
+  public void testDeleteAgentInstallsForTenant() {
+    final AgentRelease release = saveRelease("1.0.0", TELEGRAF);
+
+    final AgentInstall install = saveInstall(release, "t-1", LabelSelectorMethod.AND, "os", "linux");
+
+    saveBinding(install, "r-1");
+    saveBinding(install, "r-2");
+
+    final AgentInstall install2 = saveInstall(release, "t-1", LabelSelectorMethod.AND, "os", "linux");
+
+    saveBinding(install2, "r-1");
+    saveBinding(install2, "r-2");
+
+    // EXECUTE
+    agentInstallService.deleteAllAgentInstallsForTenant("t-1");
+
+    // VERIFY
+
+    final Optional<AgentInstall> saved = agentInstallRepository.findById(install.getId());
+    assertThat(saved).isNotPresent();
+
+    final Optional<AgentInstall> saved2 = agentInstallRepository.findById(install2.getId());
+    assertThat(saved2).isNotPresent();
+
+    final Iterable<BoundAgentInstall> bindings = boundAgentInstallRepository.findAll();
+    assertThat(bindings).isEmpty();
+
+    verify(boundEventSender)
+        .sendTo(eq(OperationType.DELETE), eq(null), tenantResourcesArg.capture());
+    assertThat(tenantResourcesArg.getValue())
+        .containsExactlyInAnyOrder(
+            new TenantResource("t-1", "r-1"),
+            new TenantResource("t-1", "r-2")
+        );
+
+    verifyNoMoreInteractions(boundEventSender, resourceApi);
+  }
+
+  @Test
   public void testFindBoundAgentTypesByResource() {
     final AgentRelease releaseT1 = saveRelease("1.0.0", TELEGRAF);
     final AgentRelease releaseT2 = saveRelease("2.0.0", TELEGRAF);
