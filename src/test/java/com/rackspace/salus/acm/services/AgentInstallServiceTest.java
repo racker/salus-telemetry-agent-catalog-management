@@ -34,6 +34,7 @@ import com.rackspace.salus.resource_management.web.model.ResourceDTO;
 import com.rackspace.salus.telemetry.entities.AgentInstall;
 import com.rackspace.salus.telemetry.entities.AgentRelease;
 import com.rackspace.salus.telemetry.entities.BoundAgentInstall;
+import com.rackspace.salus.telemetry.entities.Resource;
 import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
 import com.rackspace.salus.telemetry.messaging.OperationType;
 import com.rackspace.salus.telemetry.messaging.ResourceEvent;
@@ -43,6 +44,7 @@ import com.rackspace.salus.telemetry.model.NotFoundException;
 import com.rackspace.salus.telemetry.repositories.AgentInstallRepository;
 import com.rackspace.salus.telemetry.repositories.AgentReleaseRepository;
 import com.rackspace.salus.telemetry.repositories.BoundAgentInstallRepository;
+import com.rackspace.salus.telemetry.repositories.ResourceRepository;
 import com.rackspace.salus.telemetry.repositories.TenantMetadataRepository;
 import com.rackspace.salus.test.EnableTestContainersDatabase;
 import java.net.ConnectException;
@@ -99,6 +101,9 @@ public class AgentInstallServiceTest {
 
   @MockBean
   TenantMetadataRepository tenantMetadataRepository;
+
+  @MockBean
+  ResourceRepository resourceRepository;
 
   @Autowired
   AgentReleaseService agentReleaseService;
@@ -779,8 +784,8 @@ public class AgentInstallServiceTest {
 
   @Test
   public void testHandleResourceEvent_resourceDoesNotExist() {
-    when(resourceApi.getByResourceId(any(), any()))
-        .thenReturn(null);
+    when(resourceRepository.findByTenantIdAndResourceId(any(), any()))
+        .thenReturn(Optional.empty());
 
     // EXECUTE
     agentInstallService.handleResourceEvent(
@@ -791,19 +796,19 @@ public class AgentInstallServiceTest {
 
     // VERIFY
 
-    verify(resourceApi).getByResourceId("t-any", "r-any");
+    verify(resourceRepository).findByTenantIdAndResourceId("t-any", "r-any");
 
     verifyNoMoreInteractions(boundEventSender, resourceApi);
   }
 
   @Test
   public void testHandleResourceEvent_nonEnvoyResource() {
-    when(resourceApi.getByResourceId(any(), any()))
+    when(resourceRepository.findByTenantIdAndResourceId(any(), any()))
         .then(invocationOnMock ->
-            new ResourceDTO()
+            Optional.of(new Resource()
                 .setAssociatedWithEnvoy(false)
                 .setTenantId(invocationOnMock.getArgument(0))
-                .setResourceId(invocationOnMock.getArgument(1))
+                .setResourceId(invocationOnMock.getArgument(1)))
         );
 
     // EXECUTE
@@ -813,7 +818,7 @@ public class AgentInstallServiceTest {
             .setResourceId("r-not-envoy")
     );
 
-    verify(resourceApi).getByResourceId("t-any", "r-not-envoy");
+    verify(resourceRepository).findByTenantIdAndResourceId("t-any", "r-not-envoy");
 
     // VERIFY
     verifyNoMoreInteractions(boundEventSender, resourceApi);
@@ -825,13 +830,13 @@ public class AgentInstallServiceTest {
     resourceLabels.put("os", "linux");
     resourceLabels.put("arch", "amd64");
 
-    when(resourceApi.getByResourceId(any(), any()))
+    when(resourceRepository.findByTenantIdAndResourceId(any(), any()))
         .then(invocationOnMock ->
-            new ResourceDTO()
+            Optional.of(new Resource()
                 .setAssociatedWithEnvoy(true)
                 .setTenantId(invocationOnMock.getArgument(0))
                 .setResourceId(invocationOnMock.getArgument(1))
-                .setLabels(resourceLabels)
+                .setLabels(resourceLabels))
         );
 
     final AgentRelease release = saveRelease("1.0.0", TELEGRAF);
@@ -854,7 +859,7 @@ public class AgentInstallServiceTest {
     assertThat(savedBinding.getResourceId()).isEqualTo("r-1");
     assertThat(savedBinding.getAgentInstall().getId()).isEqualTo(install.getId());
 
-    verify(resourceApi).getByResourceId("t-1", "r-1");
+    verify(resourceRepository).findByTenantIdAndResourceId("t-1", "r-1");
 
     verify(boundEventSender).sendTo(eq(OperationType.UPSERT), eq(TELEGRAF), tenantResourcesArg.capture());
     assertThat(tenantResourcesArg.getValue()).containsExactlyInAnyOrder(
@@ -870,13 +875,13 @@ public class AgentInstallServiceTest {
     resourceLabels.put("os", "linux");
     resourceLabels.put("arch", "amd64");
 
-    when(resourceApi.getByResourceId(any(), any()))
+    when(resourceRepository.findByTenantIdAndResourceId(any(), any()))
         .then(invocationOnMock ->
-            new ResourceDTO()
+            Optional.of(new Resource()
                 .setAssociatedWithEnvoy(true)
                 .setTenantId(invocationOnMock.getArgument(0))
                 .setResourceId(invocationOnMock.getArgument(1))
-                .setLabels(resourceLabels)
+                .setLabels(resourceLabels))
         );
 
     final AgentRelease release = saveRelease("1.0.0", TELEGRAF);
@@ -902,7 +907,7 @@ public class AgentInstallServiceTest {
     assertThat(savedBinding.getResourceId()).isEqualTo("r-1");
     assertThat(savedBinding.getAgentInstall().getId()).isEqualTo(install.getId());
 
-    verify(resourceApi).getByResourceId("t-1", "r-1");
+    verify(resourceRepository).findByTenantIdAndResourceId("t-1", "r-1");
 
     verify(boundEventSender).sendTo(eq(OperationType.UPSERT), eq(TELEGRAF), tenantResourcesArg.capture());
     assertThat(tenantResourcesArg.getValue()).containsExactlyInAnyOrder(
@@ -918,13 +923,13 @@ public class AgentInstallServiceTest {
     resourceLabels.put("os", "linux");
     resourceLabels.put("arch", "amd64");
 
-    when(resourceApi.getByResourceId(any(), any()))
+    when(resourceRepository.findByTenantIdAndResourceId(any(), any()))
         .then(invocationOnMock ->
-            new ResourceDTO()
+            Optional.of(new Resource()
                 .setAssociatedWithEnvoy(true)
                 .setTenantId(invocationOnMock.getArgument(0))
                 .setResourceId(invocationOnMock.getArgument(1))
-                .setLabels(resourceLabels)
+                .setLabels(resourceLabels))
         );
 
     final AgentRelease release = saveRelease("1.0.0", TELEGRAF);
@@ -952,7 +957,7 @@ public class AgentInstallServiceTest {
     assertThat(savedBinding.getResourceId()).isEqualTo("r-1");
     assertThat(savedBinding.getAgentInstall().getId()).isEqualTo(install.getId());
 
-    verify(resourceApi).getByResourceId("t-1", "r-1");
+    verify(resourceRepository).findByTenantIdAndResourceId("t-1", "r-1");
 
     verify(boundEventSender).sendTo(eq(OperationType.UPSERT), eq(TELEGRAF), tenantResourcesArg.capture());
     assertThat(tenantResourcesArg.getValue()).containsExactlyInAnyOrder(
@@ -969,13 +974,13 @@ public class AgentInstallServiceTest {
     resourceLabels.put("os", "linux");
     resourceLabels.put("arch", "amd64");
 
-    when(resourceApi.getByResourceId(any(), any()))
+    when(resourceRepository.findByTenantIdAndResourceId(any(), any()))
         .then(invocationOnMock ->
-            new ResourceDTO()
+            Optional.of(new Resource()
                 .setAssociatedWithEnvoy(true)
                 .setTenantId(invocationOnMock.getArgument(0))
                 .setResourceId(invocationOnMock.getArgument(1))
-                .setLabels(resourceLabels)
+                .setLabels(resourceLabels))
         );
 
     final AgentRelease release1 = saveRelease("1.0.0", TELEGRAF);
@@ -1002,7 +1007,7 @@ public class AgentInstallServiceTest {
     // picked newer?
     assertThat(savedBinding.getAgentInstall().getId()).isEqualTo(install2.getId());
 
-    verify(resourceApi).getByResourceId("t-1", "r-1");
+    verify(resourceRepository).findByTenantIdAndResourceId("t-1", "r-1");
 
     verify(boundEventSender).sendTo(eq(OperationType.UPSERT), eq(TELEGRAF), tenantResourcesArg.capture());
     assertThat(tenantResourcesArg.getValue()).containsExactlyInAnyOrder(
@@ -1019,13 +1024,13 @@ public class AgentInstallServiceTest {
     resourceLabels.put("os", "linux");
     resourceLabels.put("arch", "amd64");
 
-    when(resourceApi.getByResourceId(any(), any()))
+    when(resourceRepository.findByTenantIdAndResourceId(any(), any()))
         .then(invocationOnMock ->
-            new ResourceDTO()
+            Optional.of(new Resource()
                 .setAssociatedWithEnvoy(true)
                 .setTenantId(invocationOnMock.getArgument(0))
                 .setResourceId(invocationOnMock.getArgument(1))
-                .setLabels(resourceLabels)
+                .setLabels(resourceLabels))
         );
 
     final AgentRelease release1 = saveRelease("1.0.0", TELEGRAF);
@@ -1056,7 +1061,7 @@ public class AgentInstallServiceTest {
     // kept only newer?
     assertThat(savedBinding.getAgentInstall().getId()).isEqualTo(install2.getId());
 
-    verify(resourceApi).getByResourceId("t-1", "r-1");
+    verify(resourceRepository).findByTenantIdAndResourceId("t-1", "r-1");
 
     // but no event was needed since binding already present
 
@@ -1069,13 +1074,13 @@ public class AgentInstallServiceTest {
     resourceLabels.put("os", "linux");
     resourceLabels.put("arch", "amd64");
 
-    when(resourceApi.getByResourceId(any(), any()))
+    when(resourceRepository.findByTenantIdAndResourceId(any(), any()))
         .then(invocationOnMock ->
-            new ResourceDTO()
+            Optional.of(new Resource()
                 .setAssociatedWithEnvoy(true)
                 .setTenantId(invocationOnMock.getArgument(0))
                 .setResourceId(invocationOnMock.getArgument(1))
-                .setLabels(resourceLabels)
+                .setLabels(resourceLabels))
         );
 
     final AgentRelease release = saveRelease("1.0.0", TELEGRAF);
@@ -1100,7 +1105,7 @@ public class AgentInstallServiceTest {
     assertThat(savedBinding.getResourceId()).isEqualTo("r-1");
     assertThat(savedBinding.getAgentInstall().getId()).isEqualTo(install.getId());
 
-    verify(resourceApi).getByResourceId("t-1", "r-1");
+    verify(resourceRepository).findByTenantIdAndResourceId("t-1", "r-1");
 
     // but no event was needed since binding already present
 
@@ -1109,13 +1114,13 @@ public class AgentInstallServiceTest {
 
   @Test
   public void testHandleResourceEvent_labelsChanged_resourceWithoutLabels() {
-    when(resourceApi.getByResourceId(any(), any()))
+    when(resourceRepository.findByTenantIdAndResourceId(any(), any()))
         .then(invocationOnMock ->
-            new ResourceDTO()
+            Optional.of(new Resource()
                 .setAssociatedWithEnvoy(true)
                 .setTenantId(invocationOnMock.getArgument(0))
                 .setResourceId(invocationOnMock.getArgument(1))
-                .setLabels(emptyMap())
+                .setLabels(emptyMap()))
         );
 
     final AgentRelease release = saveRelease("1.0.0", TELEGRAF);
@@ -1142,7 +1147,7 @@ public class AgentInstallServiceTest {
     assertThat(savedBinding.getResourceId()).isEqualTo("r-1");
     assertThat(savedBinding.getAgentInstall().getId()).isEqualTo(install2.getId());
 
-    verify(resourceApi).getByResourceId("t-1", "r-1");
+    verify(resourceRepository).findByTenantIdAndResourceId("t-1", "r-1");
 
     // but no event was needed since binding already present
 
@@ -1155,13 +1160,13 @@ public class AgentInstallServiceTest {
     resourceLabels.put("os", "windows");
     resourceLabels.put("arch", "amd64");
 
-    when(resourceApi.getByResourceId(any(), any()))
+    when(resourceRepository.findByTenantIdAndResourceId(any(), any()))
         .then(invocationOnMock ->
-            new ResourceDTO()
+            Optional.of(new Resource()
                 .setAssociatedWithEnvoy(true)
                 .setTenantId(invocationOnMock.getArgument(0))
                 .setResourceId(invocationOnMock.getArgument(1))
-                .setLabels(resourceLabels)
+                .setLabels(resourceLabels))
         );
 
     final AgentRelease release = saveRelease("1.0.0", TELEGRAF);
@@ -1183,7 +1188,7 @@ public class AgentInstallServiceTest {
     final Iterable<BoundAgentInstall> bindings = boundAgentInstallRepository.findAll();
     assertThat(bindings).isEmpty();
 
-    verify(resourceApi).getByResourceId("t-1", "r-1");
+    verify(resourceRepository).findByTenantIdAndResourceId("t-1", "r-1");
 
     verify(boundEventSender).sendTo(eq(OperationType.DELETE), eq(TELEGRAF), tenantResourcesArg.capture());
     assertThat(tenantResourcesArg.getValue()).containsExactlyInAnyOrder(
@@ -1199,13 +1204,13 @@ public class AgentInstallServiceTest {
     resourceLabels.put("os", "windows");
     resourceLabels.put("arch", "amd64");
 
-    when(resourceApi.getByResourceId(any(), any()))
+    when(resourceRepository.findByTenantIdAndResourceId(any(), any()))
         .then(invocationOnMock ->
-            new ResourceDTO()
+            Optional.of(new Resource()
                 .setAssociatedWithEnvoy(true)
                 .setTenantId(invocationOnMock.getArgument(0))
                 .setResourceId(invocationOnMock.getArgument(1))
-                .setLabels(resourceLabels)
+                .setLabels(resourceLabels))
         );
 
     final AgentRelease release = saveRelease("1.0.0", TELEGRAF);
@@ -1225,7 +1230,7 @@ public class AgentInstallServiceTest {
     final Iterable<BoundAgentInstall> bindings = boundAgentInstallRepository.findAll();
     assertThat(bindings).isEmpty();
 
-    verify(resourceApi).getByResourceId("t-1", "r-1");
+    verify(resourceRepository).findByTenantIdAndResourceId("t-1", "r-1");
 
     // no binding event since no match
 

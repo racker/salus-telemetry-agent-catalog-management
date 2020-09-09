@@ -24,6 +24,7 @@ import com.rackspace.salus.resource_management.web.model.ResourceDTO;
 import com.rackspace.salus.telemetry.entities.AgentInstall;
 import com.rackspace.salus.telemetry.entities.AgentRelease;
 import com.rackspace.salus.telemetry.entities.BoundAgentInstall;
+import com.rackspace.salus.telemetry.entities.Resource;
 import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
 import com.rackspace.salus.telemetry.messaging.OperationType;
 import com.rackspace.salus.telemetry.messaging.ResourceEvent;
@@ -32,6 +33,7 @@ import com.rackspace.salus.telemetry.model.NotFoundException;
 import com.rackspace.salus.telemetry.repositories.AgentInstallRepository;
 import com.rackspace.salus.telemetry.repositories.AgentReleaseRepository;
 import com.rackspace.salus.telemetry.repositories.BoundAgentInstallRepository;
+import com.rackspace.salus.telemetry.repositories.ResourceRepository;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -66,6 +68,7 @@ public class AgentInstallService {
   private final BoundEventSender boundEventSender;
   private final String labelMatchQuery;
   private final String labelMatchORQuery;
+  private final ResourceRepository resourceRepository;
 
   @Autowired
   public AgentInstallService(JdbcTemplate jdbcTemplate,
@@ -74,7 +77,8 @@ public class AgentInstallService {
                              AgentInstallRepository agentInstallRepository,
                              BoundAgentInstallRepository boundAgentInstallRepository,
                              ResourceApi resourceApi,
-                             BoundEventSender boundEventSender) throws IOException {
+                             BoundEventSender boundEventSender,
+                             ResourceRepository resourceRepository) throws IOException {
     this.jdbcTemplate = jdbcTemplate;
     this.em = entityManager;
     this.agentReleaseRepository = agentReleaseRepository;
@@ -82,6 +86,7 @@ public class AgentInstallService {
     this.boundAgentInstallRepository = boundAgentInstallRepository;
     this.resourceApi = resourceApi;
     this.boundEventSender = boundEventSender;
+    this.resourceRepository = resourceRepository;
     labelMatchQuery = SpringResourceUtils.readContent("sql-queries/agent_installs_label_matching_query.sql");
     labelMatchORQuery = SpringResourceUtils.readContent("sql-queries/agent_installs_label_matching_OR_query.sql");
   }
@@ -176,8 +181,8 @@ public class AgentInstallService {
     } else {
       // ...further evaluate actions that require resource lookup
 
-      final ResourceDTO resource = resourceApi
-          .getByResourceId(resourceEvent.getTenantId(), resourceEvent.getResourceId());
+      final ResourceDTO resource = findResourceByTenantIdAndResourceId(resourceEvent.getTenantId(),
+          resourceEvent.getResourceId());
 
       if (resource == null) {
         log.warn("Unable to locate resource from event={}", resourceEvent);
@@ -472,5 +477,12 @@ public class AgentInstallService {
 
   private static ComparableVersion versionOf(AgentInstall install) {
     return new ComparableVersion(install.getAgentRelease().getVersion());
+  }
+
+  public ResourceDTO findResourceByTenantIdAndResourceId(String tenantId, String resourceId) {
+    Resource resource = resourceRepository.findByTenantIdAndResourceId(tenantId, resourceId)
+        .orElse(null);
+
+    return resource == null ? null : new ResourceDTO(resource, null);
   }
 }
