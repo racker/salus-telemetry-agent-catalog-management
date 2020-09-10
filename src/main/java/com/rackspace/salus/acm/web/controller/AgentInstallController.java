@@ -18,7 +18,6 @@
 package com.rackspace.salus.acm.web.controller;
 
 import com.rackspace.salus.acm.services.AgentInstallService;
-import com.rackspace.salus.acm.web.client.AgentInstallApi;
 import com.rackspace.salus.acm.web.model.AgentInstallCreate;
 import com.rackspace.salus.acm.web.model.AgentInstallDTO;
 import com.rackspace.salus.acm.web.model.BoundAgentInstallDTO;
@@ -54,7 +53,7 @@ import org.springframework.web.bind.annotation.RestController;
             @AuthorizationScope(scope = "delete:agent_install", description = "delete your Agent Installations")
         })
 })
-public class AgentInstallController implements AgentInstallApi {
+public class AgentInstallController {
 
   private final AgentInstallRepository agentInstallRepository;
   private final BoundAgentInstallRepository boundAgentInstallRepository;
@@ -69,7 +68,6 @@ public class AgentInstallController implements AgentInstallApi {
     this.agentInstallService = agentInstallService;
   }
 
-  @Override
   @GetMapping("/admin/bound-agent-installs/{tenantId}/{resourceId}/{agentType}")
   @ApiOperation(value = "Gets bound agent installation for the given tenant resource and agent type")
   public BoundAgentInstallDTO getBindingForResourceAndAgentType(
