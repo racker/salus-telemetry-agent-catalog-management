@@ -24,7 +24,6 @@ import com.rackspace.salus.resource_management.web.model.ResourceDTO;
 import com.rackspace.salus.telemetry.entities.AgentInstall;
 import com.rackspace.salus.telemetry.entities.AgentRelease;
 import com.rackspace.salus.telemetry.entities.BoundAgentInstall;
-import com.rackspace.salus.telemetry.entities.Resource;
 import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
 import com.rackspace.salus.telemetry.messaging.OperationType;
 import com.rackspace.salus.telemetry.messaging.ResourceEvent;
@@ -480,9 +479,8 @@ public class AgentInstallService {
   }
 
   public ResourceDTO findResourceByTenantIdAndResourceId(String tenantId, String resourceId) {
-    Resource resource = resourceRepository.findByTenantIdAndResourceId(tenantId, resourceId)
+    return resourceRepository.findByTenantIdAndResourceId(tenantId, resourceId)
+        .map(resource -> new ResourceDTO(resource, null))
         .orElse(null);
-
-    return resource == null ? null : new ResourceDTO(resource, null);
   }
 }
