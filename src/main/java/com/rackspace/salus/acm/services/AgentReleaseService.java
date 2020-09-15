@@ -16,10 +16,15 @@
 
 package com.rackspace.salus.acm.services;
 
+import com.rackspace.salus.common.config.MetricNames;
+import com.rackspace.salus.common.config.MetricTags;
+import com.rackspace.salus.common.config.MetricTagValues;
 import com.rackspace.salus.telemetry.entities.AgentRelease;
 import com.rackspace.salus.telemetry.repositories.AgentReleaseRepository;
 import com.rackspace.salus.acm.web.model.AgentReleaseCreate;
 import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.util.List;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
@@ -32,9 +37,17 @@ public class AgentReleaseService {
 
   private final AgentReleaseRepository repository;
 
+  MeterRegistry meterRegistry;
+
+  // metrics counters
+  private final Counter.Builder agentReleaseSuccess;
+
   @Autowired
-  public AgentReleaseService(AgentReleaseRepository repository) {
+  public AgentReleaseService(AgentReleaseRepository repository, MeterRegistry meterRegistry) {
     this.repository = repository;
+    this.meterRegistry = meterRegistry;
+    this.agentReleaseSuccess = Counter.builder(MetricNames.SERVICE_OPERATION_SUCCEEDED)
+        .tag(MetricTags.SERVICE_METRIC_TAG,"AgentRelease");
   }
 
   public AgentRelease create(AgentReleaseCreate in) {
@@ -59,11 +72,17 @@ public class AgentReleaseService {
         .save(agentRelease);
 
     log.info("Created agentRelease={}", saved);
+    agentReleaseSuccess
+        .tags(MetricTags.OPERATION_METRIC_TAG, MetricTagValues.CREATE_OPERATION,MetricTags.OBJECT_TYPE_METRIC_TAG,"agentRelease")
+        .register(meterRegistry).increment();
     return saved;
   }
 
   public void delete(UUID agentReleaseId) {
     log.info("Deleting agentReleaseId={}", agentReleaseId);
     repository.deleteById(agentReleaseId);
+    agentReleaseSuccess
+        .tags(MetricTags.OPERATION_METRIC_TAG, MetricTagValues.REMOVE_OPERATION,MetricTags.OBJECT_TYPE_METRIC_TAG,"agentRelease")
+        .register(meterRegistry).increment();
   }
 }

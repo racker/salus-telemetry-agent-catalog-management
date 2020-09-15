@@ -18,6 +18,9 @@
 package com.rackspace.salus.acm.services;
 
 import com.rackspace.salus.acm.web.model.AgentInstallCreate;
+import com.rackspace.salus.common.config.MetricNames;
+import com.rackspace.salus.common.config.MetricTags;
+import com.rackspace.salus.common.config.MetricTagValues;
 import com.rackspace.salus.common.util.SpringResourceUtils;
 import com.rackspace.salus.resource_management.web.client.ResourceApi;
 import com.rackspace.salus.resource_management.web.model.ResourceDTO;
@@ -32,6 +35,8 @@ import com.rackspace.salus.telemetry.model.NotFoundException;
 import com.rackspace.salus.telemetry.repositories.AgentInstallRepository;
 import com.rackspace.salus.telemetry.repositories.AgentReleaseRepository;
 import com.rackspace.salus.telemetry.repositories.BoundAgentInstallRepository;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import com.rackspace.salus.telemetry.repositories.ResourceRepository;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -69,13 +74,18 @@ public class AgentInstallService {
   private final String labelMatchORQuery;
   private final ResourceRepository resourceRepository;
 
+  MeterRegistry meterRegistry;
+
+  // metrics counters
+  private final Counter.Builder agentInstallSuccess;
+
   @Autowired
   public AgentInstallService(JdbcTemplate jdbcTemplate,
                              EntityManager entityManager,
                              AgentReleaseRepository agentReleaseRepository,
                              AgentInstallRepository agentInstallRepository,
                              BoundAgentInstallRepository boundAgentInstallRepository,
-                             ResourceApi resourceApi,
+                             ResourceApi resourceApi, MeterRegistry meterRegistry,
                              BoundEventSender boundEventSender,
                              ResourceRepository resourceRepository) throws IOException {
     this.jdbcTemplate = jdbcTemplate;
@@ -88,6 +98,10 @@ public class AgentInstallService {
     this.resourceRepository = resourceRepository;
     labelMatchQuery = SpringResourceUtils.readContent("sql-queries/agent_installs_label_matching_query.sql");
     labelMatchORQuery = SpringResourceUtils.readContent("sql-queries/agent_installs_label_matching_OR_query.sql");
+
+    this.meterRegistry = meterRegistry;
+    agentInstallSuccess = Counter.builder(MetricNames.SERVICE_OPERATION_SUCCEEDED)
+        .tag(MetricTags.SERVICE_METRIC_TAG,"AgentInstall");
   }
 
   @Transactional
@@ -118,6 +132,9 @@ public class AgentInstallService {
     bindInstallToResources(saved);
 
     log.info("Created agentInstall={}", saved);
+    agentInstallSuccess
+        .tags(MetricTags.OPERATION_METRIC_TAG,"install",MetricTags.OBJECT_TYPE_METRIC_TAG,"agent")
+        .register(meterRegistry).increment();
     return saved;
   }
 
@@ -145,6 +162,9 @@ public class AgentInstallService {
       boundEventSender.sendTo(
           OperationType.DELETE, agentInstall.getAgentRelease().getType(), affectedResourceIds);
     }
+    agentInstallSuccess
+        .tags(MetricTags.OPERATION_METRIC_TAG, MetricTagValues.REMOVE_OPERATION,MetricTags.OBJECT_TYPE_METRIC_TAG,"agent")
+        .register(meterRegistry).increment();
   }
 
   @Transactional
@@ -165,6 +185,9 @@ public class AgentInstallService {
       boundEventSender.sendTo(
           OperationType.DELETE, null, affectedResourceIds);
     }
+    agentInstallSuccess
+        .tags(MetricTags.OPERATION_METRIC_TAG,"deleteAll",MetricTags.OBJECT_TYPE_METRIC_TAG,"agent")
+        .register(meterRegistry).increment();
   }
 
   void handleResourceEvent(ResourceEvent resourceEvent) {
