@@ -39,6 +39,7 @@ import com.rackspace.salus.telemetry.repositories.AgentInstallRepository;
 import com.rackspace.salus.telemetry.repositories.BoundAgentInstallRepository;
 import com.rackspace.salus.telemetry.repositories.TenantMetadataRepository;
 import com.rackspace.salus.test.JsonTestUtils;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.UUID;
@@ -72,6 +73,9 @@ public class AgentInstallControllerTest {
 
   @MockBean
   AgentInstallService agentInstallService;
+
+  @MockBean
+  MeterRegistry meterRegistry;
 
   @Test
   public void getBindingForResourceAndAgentType_found() throws Exception {
